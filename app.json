@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "DriverX",
+    "slug": "parkingvalet",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./assets/images/driverxlogo.jpeg",
+    "scheme": "driverapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "jsEngine": "hermes",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.valetparkingsorganization.valetparking",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.valetparkingsorganization.valetparking",
+      "versionCode": 3,
+      "edgeToEdgeEnabled": true,
+      "config": {
+        "googleMaps": {
+          "apikey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      },
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/driverxlogo.jpeg",
+        "backgroundColor": "#FFD700"
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/driverxlogo.jpeg",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFD700"
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "31d1b850-e82f-43c0-91b0-facdf4defb82"
+      }
+    },
+    "owner": "aditya_0622"
+  }
+}
