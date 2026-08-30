@@ -68,6 +68,19 @@ export default function CustomDrawerContent(props: any) {
                         onPress={() => router.push('/card-parking' as any)}
                     />
 
+                    <DrawerItem
+                        label="Recent Tickets"
+                        focused={false}
+                        labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
+                        activeTintColor={isDarkMode ? '#0A84FF' : '#484849'}
+                        inactiveTintColor={isDarkMode ? '#a0a0a0' : '#444'}
+                        activeBackgroundColor={isDarkMode ? '#2c2c2e' : '#eee'}
+                        icon={({ color, size }) => (
+                            <Ionicons name="receipt-outline" color={color} size={size} />
+                        )}
+                        onPress={() => router.push({ pathname: '/card-parking', params: { mode: 'keyreturn', tab: 'recent' } } as any)}
+                    />
+
                 </View>
 
                 <View style={[styles.footer, { borderTopColor: isDarkMode ? '#38383a' : '#e0e0e0' }]}>

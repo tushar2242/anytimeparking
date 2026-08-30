@@ -87,10 +87,10 @@ export default function ValetAttendantWorkflowScreen() {
     const [workflowMode, setWorkflowMode] = useState<'checkin' | 'keyreturn'>('checkin');
 
     // Steps state:
-    // Check-in: 2 = Check-In Details, 3 = Inspection Photos, 4 = Ticket Generated
+    // Check-in: 2 = Check-In Details, 3 = Ticket Generated
     const [checkinStep, setCheckinStep] = useState<number>(2);
     // Key Return: 1 = Scan QR, 2 = Search Ticket, 3 = Return Request Info, 4 = Vehicle Return, 5 = Status Returned
-    const [returnStep, setReturnStep] = useState<number>(1);
+    const [returnStep, setReturnStep] = useState<number>(2);
 
     // ==========================================
     // Check-In Form State
@@ -122,10 +122,7 @@ export default function ValetAttendantWorkflowScreen() {
     const [ticketNumber, setTicketNumber] = useState('');
     const [parkingTime, setParkingTime] = useState('');
 
-    // Inspection additional states
-    const [odometer, setOdometer] = useState('45231');
-    const [fuelLevel, setFuelLevel] = useState('3/4');
-    const [isDamageDetected, setIsDamageDetected] = useState(false);
+
 
     // UI States for Check-in
     const [showBrandDropdown, setShowBrandDropdown] = useState(false);
@@ -136,8 +133,7 @@ export default function ValetAttendantWorkflowScreen() {
     // ==========================================
     // Key Return Form State
     // ==========================================
-    const [searchTab, setSearchTab] = useState<'manual' | 'recent'>('manual');
-    const [searchBy, setSearchBy] = useState<'mobile' | 'car' | 'ticket'>('mobile');
+    const [searchTab, setSearchTab] = useState<'manual' | 'scan' | 'recent'>('manual');
     const [searchQuery, setSearchQuery] = useState('');
     const [flashlightOn, setFlashlightOn] = useState(false);
     const [searching, setSearching] = useState(false);
@@ -172,12 +168,18 @@ export default function ValetAttendantWorkflowScreen() {
     useEffect(() => {
         if (params.mode === 'scan' || params.mode === 'keyreturn') {
             setWorkflowMode('keyreturn');
-            setReturnStep(1);
+            if (params.tab === 'recent') {
+                setReturnStep(2);
+                setSearchTab('recent');
+            } else {
+                setReturnStep(2);
+                setSearchTab('manual');
+            }
         } else {
             setWorkflowMode('checkin');
             setCheckinStep(2);
         }
-    }, [params.mode]);
+    }, [params.mode, params.tab]);
 
     // Theme Color Mapping - dynamically aligns with dashboard check-in (blue) and key return (orange) cards
     const themeColor = workflowMode === 'checkin' ? '#0066FF' : '#FF851B';
@@ -210,14 +212,6 @@ export default function ValetAttendantWorkflowScreen() {
             }
         }
     }, [checkinStep, returnStep, workflowMode, permission]);
-
-    useEffect(() => {
-        if (workflowMode === 'checkin' && checkinStep === 2) {
-            if (!licensePlate && !model) {
-                triggerOCR();
-            }
-        }
-    }, [checkinStep, workflowMode, licensePlate, model]);
 
     // ==========================================
     // Check-In Actions
@@ -256,7 +250,6 @@ export default function ValetAttendantWorkflowScreen() {
         } else {
             // Main check-in photo capture (Step 2)
             setPhotoUri(uri);
-            setCheckinStep(3);
         }
     };
 
@@ -369,7 +362,7 @@ export default function ValetAttendantWorkflowScreen() {
 
             setTicketNumber(generatedTicket);
             setParkingTime(currentTime);
-            setCheckinStep(4);
+            setCheckinStep(3);
         } catch (e) {
             console.error(e);
             Alert.alert('Error', 'Failed to generate valet ticket. Please try again.');
@@ -413,12 +406,14 @@ export default function ValetAttendantWorkflowScreen() {
             let tId = `WP${mockRand}`;
             let ph = '9876543210';
 
-            if (searchBy === 'car') {
-                car = searchQuery.trim().toUpperCase();
-            } else if (searchBy === 'ticket') {
-                tId = searchQuery.trim().toUpperCase();
+            const query = searchQuery.trim();
+            const cleanQuery = query.toUpperCase();
+            if (/^\d{10}$/.test(query)) {
+                ph = query;
+            } else if (cleanQuery.startsWith('WP') || cleanQuery.startsWith('VP') || cleanQuery.length > 8) {
+                tId = cleanQuery;
             } else {
-                ph = searchQuery.trim();
+                car = cleanQuery;
             }
 
             setFoundTicket({
@@ -570,8 +565,6 @@ export default function ValetAttendantWorkflowScreen() {
                 { label: 'License Plate', value: licensePlate.toUpperCase() },
                 { label: 'Vehicle Model', value: `${brand} ${model}` },
                 { label: 'Vehicle Color', value: color },
-                { label: 'Odometer', value: `${odometer} KM` },
-                { label: 'Fuel Level', value: fuelLevel },
                 { label: 'Customer Name', value: driverName },
                 { label: 'Phone Number', value: phone },
                 { label: 'Parking Status', value: 'PARKED' },
@@ -605,9 +598,7 @@ export default function ValetAttendantWorkflowScreen() {
         setReturnPhotoLeft(null);
         setReturnPhotoRight(null);
 
-        setOdometer('45231');
-        setFuelLevel('3/4');
-        setIsDamageDetected(false);
+
 
         setLicensePlate('');
         setModel('');
@@ -620,7 +611,7 @@ export default function ValetAttendantWorkflowScreen() {
         if (workflowMode === 'checkin') {
             setCheckinStep(2);
         } else {
-            setReturnStep(1);
+            setReturnStep(2);
         }
     };
 
@@ -670,8 +661,7 @@ export default function ValetAttendantWorkflowScreen() {
     const renderStepFooter = () => {
         const checkinSteps = [
             { label: 'Login', icon: 'lock-closed' },
-            { label: 'Capture Photo', icon: 'camera' },
-            { label: 'Review Details', icon: 'create' },
+            { label: 'Enter Details', icon: 'create' },
             { label: 'Ticket + QR', icon: 'qr-code' },
         ];
 
@@ -747,7 +737,7 @@ export default function ValetAttendantWorkflowScreen() {
                 <View style={[styles.headerNavbar, isDarkMode && { backgroundColor: '#1C1C1E', borderBottomColor: '#2C2C2E' }]}>
                     <TouchableOpacity
                         onPress={() => {
-                            const showBack = (workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 4) ||
+                            const showBack = (workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 3) ||
                                 (workflowMode === 'keyreturn' && returnStep > 1 && returnStep < 5);
                             if (showBack) {
                                 if (workflowMode === 'checkin' && checkinStep > 2) {
@@ -761,7 +751,7 @@ export default function ValetAttendantWorkflowScreen() {
                         }}
                         style={styles.backButton}
                     >
-                        {((workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 4) ||
+                        {((workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 3) ||
                             (workflowMode === 'keyreturn' && returnStep > 1 && returnStep < 5)) ? (
                             <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
                         ) : (
@@ -773,9 +763,8 @@ export default function ValetAttendantWorkflowScreen() {
                         <Text style={[styles.headerTitle, isDarkMode && { color: '#fff' }]}>
                             {workflowMode === 'checkin' && (
                                 <>
-                                    {checkinStep === 2 && 'Check-In & Inspection'}
-                                    {checkinStep === 3 && 'Vehicle Inspection'}
-                                    {checkinStep === 4 && 'Details Completed'}
+                                    {checkinStep === 2 && 'Check-In Details'}
+                                    {checkinStep === 3 && 'Details Completed'}
                                 </>
                             )}
                             {workflowMode === 'keyreturn' && (
@@ -795,31 +784,7 @@ export default function ValetAttendantWorkflowScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Workflow Mode Selector Toggle (Only show on Step 2 of checkin / Step 1 & 2 of key return) */}
-                {((workflowMode === 'checkin' && checkinStep === 2) || (workflowMode === 'keyreturn' && returnStep <= 2)) && (
-                    <View style={styles.modeToggleContainer}>
-                        <TouchableOpacity
-                            style={[styles.modeToggleItem, workflowMode === 'checkin' && { backgroundColor: themeColor }]}
-                            onPress={() => {
-                                setWorkflowMode('checkin');
-                                setCheckinStep(2);
-                            }}
-                        >
-                            <Ionicons name="log-in-outline" size={16} color={workflowMode === 'checkin' ? '#fff' : '#8E8E93'} />
-                            <Text style={[styles.modeToggleText, workflowMode === 'checkin' && styles.modeToggleTextActive]}>Valet Check-In</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.modeToggleItem, workflowMode === 'keyreturn' && { backgroundColor: themeColor }]}
-                            onPress={() => {
-                                setWorkflowMode('keyreturn');
-                                setReturnStep(1);
-                            }}
-                        >
-                            <Ionicons name="key-outline" size={16} color={workflowMode === 'keyreturn' ? '#fff' : '#8E8E93'} />
-                            <Text style={[styles.modeToggleText, workflowMode === 'keyreturn' && styles.modeToggleTextActive]}>Key Return</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+
 
                 {/* Main Content Area */}
                 <View style={styles.contentArea}>
@@ -829,76 +794,51 @@ export default function ValetAttendantWorkflowScreen() {
                     {/* ==================================================== */}
                     {workflowMode === 'checkin' && (
                         <>
-                            {/* Step 2: Capture Vehicle Photo */}
+                            {/* Step 2: Enter Details Form */}
                             {checkinStep === 2 && (
-                                <View style={styles.cameraContainer}>
-                                    {permission && permission.granted ? (
-                                        <CameraView
-                                            ref={cameraRef}
-                                            style={StyleSheet.absoluteFillObject}
-                                            facing={cameraFacing}
-                                        />
-                                    ) : (
-                                        <View style={[StyleSheet.absoluteFillObject, styles.cameraPlaceholderContainer]}>
-                                            <Ionicons name="videocam-off-outline" size={48} color="#8E8E93" style={{ marginBottom: 12 }} />
-                                            <Text style={styles.cameraPlaceholderText}>Camera Feed Unavailable (Simulator/Denied)</Text>
-                                            <TouchableOpacity style={styles.grantAccessInlineButton} onPress={handleCameraPermission}>
-                                                <Text style={styles.grantAccessInlineText}>Enable Camera</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    )}
-
-                                    {/* Viewfinder Scanning Border Overlay */}
-                                    <View style={styles.scanOverlayContainer}>
-                                        <View style={styles.scanViewfinder}>
-                                            <View style={styles.scanCorners} />
-                                        </View>
-                                        <Text style={styles.scanHelperText}>Take a clear photo of the vehicle to start check-in</Text>
-                                    </View>
-
-                                    {/* Camera Actions Bar */}
-                                    <View style={styles.cameraActionsBar}>
-                                        <TouchableOpacity style={styles.cameraSubActionButton} onPress={pickPhotoFromGallery}>
-                                            <Ionicons name="images-outline" size={24} color="#fff" />
-                                            <Text style={styles.cameraSubActionLabel}>Gallery</Text>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity style={styles.shutterButton} onPress={capturePhoto}>
-                                            <View style={styles.shutterButtonInner} />
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
-                                            style={styles.cameraSubActionButton}
-                                            onPress={() => setCameraFacing(cameraFacing === 'back' ? 'front' : 'back')}
-                                        >
-                                            <Ionicons name="camera-reverse-outline" size={24} color="#fff" />
-                                            <Text style={styles.cameraSubActionLabel}>Flip Camera</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            )}
-
-                            {/* Step 3: Review & Confirm Details Form */}
-                            {checkinStep === 3 && (
                                 <View style={styles.innerContent}>
                                     <ScrollView
                                         contentContainerStyle={styles.formScrollContainer}
                                         showsVerticalScrollIndicator={false}
                                         keyboardShouldPersistTaps="handled"
                                     >
-                                        {/* Captured Photo Preview */}
-                                        <View style={styles.previewImageContainer}>
-                                            {photoUri ? (
-                                                <Image source={{ uri: photoUri }} style={styles.previewImage} />
+                                        {/* Top Live Camera Preview Box & OCR Autofill */}
+                                        <View style={styles.topCameraPreviewCard}>
+                                            {permission && permission.granted ? (
+                                                <CameraView
+                                                    ref={cameraRef}
+                                                    style={StyleSheet.absoluteFillObject}
+                                                    facing={cameraFacing}
+                                                />
                                             ) : (
-                                                <View style={styles.previewPlaceholder}>
-                                                    <Ionicons name="car-outline" size={40} color="#8E8E93" />
+                                                <View style={[StyleSheet.absoluteFillObject, styles.cameraPlaceholderContainer]}>
+                                                    <Ionicons name="videocam-off-outline" size={36} color="#8E8E93" style={{ marginBottom: 6 }} />
+                                                    <Text style={styles.cameraPlaceholderText}>Camera Feed Unavailable</Text>
+                                                    <TouchableOpacity style={styles.grantAccessInlineButton} onPress={handleCameraPermission}>
+                                                        <Text style={styles.grantAccessInlineText}>Enable Camera</Text>
+                                                    </TouchableOpacity>
                                                 </View>
                                             )}
-                                            <TouchableOpacity style={styles.retakeBadge} onPress={() => setCheckinStep(2)}>
-                                                <Ionicons name="camera" size={14} color="#fff" />
-                                                <Text style={styles.retakeText}>Retake</Text>
-                                            </TouchableOpacity>
+
+                                            {/* Viewfinder Overlay & OCR Trigger */}
+                                            <View style={styles.topScanOverlay}>
+                                                <View style={styles.topScanCorners} />
+                                                <TouchableOpacity
+                                                    style={[styles.topOcrTriggerBtn, ocrScanning && { opacity: 0.7 }]}
+                                                    onPress={triggerOCR}
+                                                    disabled={ocrScanning}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    {ocrScanning ? (
+                                                        <ActivityIndicator size="small" color="#fff" style={{ marginRight: 6 }} />
+                                                    ) : (
+                                                        <Ionicons name="scan" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                    )}
+                                                    <Text style={styles.topOcrTriggerText}>
+                                                        {ocrScanning ? 'Scanning Plate...' : 'SCAN & AUTOFILL DETAILS'}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
 
                                         {/* License Plate Number */}
@@ -1023,57 +963,6 @@ export default function ValetAttendantWorkflowScreen() {
                                                 />
                                             </View>
                                         </View>
-
-                                        {/* Odometer Input */}
-                                        <View style={styles.formInputGroup}>
-                                            <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Odometer (KM)</Text>
-                                            <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                                                <MaterialCommunityIcons name="speedometer" size={18} color="#8E8E93" style={{ marginRight: 8 }} />
-                                                <TextInput
-                                                    style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. 45231"
-                                                    placeholderTextColor="#8E8E93"
-                                                    keyboardType="numeric"
-                                                    value={odometer}
-                                                    onChangeText={setOdometer}
-                                                />
-                                            </View>
-                                        </View>
-
-                                        {/* Fuel Level Selector */}
-                                        <View style={styles.formInputGroup}>
-                                            <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Fuel Level</Text>
-                                            <View style={styles.fuelContainer}>
-                                                {['1/4', '1/2', '3/4', 'Full'].map((opt) => (
-                                                    <TouchableOpacity
-                                                        key={opt}
-                                                        style={[styles.fuelButton, fuelLevel === opt && styles.fuelButtonActive]}
-                                                        onPress={() => setFuelLevel(opt)}
-                                                    >
-                                                        <Text style={[styles.fuelButtonText, fuelLevel === opt && styles.fuelButtonTextActive]}>{opt}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
-                                        </View>
-
-                                        {/* Damage Status Toggle */}
-                                        <View style={styles.formInputGroup}>
-                                            <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Damage Details</Text>
-                                            <View style={styles.damageToggleContainer}>
-                                                <TouchableOpacity
-                                                    style={[styles.damageToggleBtn, !isDamageDetected && styles.damageToggleBtnActive]}
-                                                    onPress={() => setIsDamageDetected(false)}
-                                                >
-                                                    <Text style={[styles.damageToggleText, !isDamageDetected && styles.damageToggleTextActive]}>No Damage</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    style={[styles.damageToggleBtn, isDamageDetected && styles.damageToggleBtnActive]}
-                                                    onPress={() => setIsDamageDetected(true)}
-                                                >
-                                                    <Text style={[styles.damageToggleText, isDamageDetected && styles.damageToggleTextActive]}>+ Add Damage</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
                                     </ScrollView>
 
                                     <TouchableOpacity
@@ -1090,8 +979,8 @@ export default function ValetAttendantWorkflowScreen() {
                                 </View>
                             )}
 
-                            {/* Step 4: Ticket Generated */}
-                            {checkinStep === 4 && (
+                            {/* Step 3: Ticket Generated */}
+                            {checkinStep === 3 && (
                                 <View style={styles.innerContent}>
                                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.ticketScrollContainer}>
                                         <View style={styles.successBanner}>
@@ -1126,14 +1015,6 @@ export default function ValetAttendantWorkflowScreen() {
                                                 <Text style={styles.ticketDetailLabel}>Vehicle Color</Text>
                                                 <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{color}</Text>
                                             </View>
-                                            <View style={styles.ticketDetailRow}>
-                                                <Text style={styles.ticketDetailLabel}>Odometer</Text>
-                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{odometer} KM</Text>
-                                            </View>
-                                            <View style={styles.ticketDetailRow}>
-                                                <Text style={styles.ticketDetailLabel}>Fuel Level</Text>
-                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{fuelLevel}</Text>
-                                            </View>
                                             <View style={[styles.ticketDivider, isDarkMode && { backgroundColor: '#2C2C2E' }]} />
                                             <View style={styles.ticketDetailRow}>
                                                 <Text style={styles.ticketDetailLabel}>Customer Name</Text>
@@ -1167,13 +1048,9 @@ export default function ValetAttendantWorkflowScreen() {
                                             <Text style={styles.whatsappButtonText}>SEND ON WHATSAPP</Text>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={[styles.shareTicketButton, { borderColor: themeColor }]} onPress={shareTicket}>
-                                            <Ionicons name="share-outline" size={20} color={themeColor} style={{ marginRight: 8 }} />
-                                            <Text style={[styles.shareTicketButtonText, { color: themeColor }]}>SHARE TICKET</Text>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity style={styles.doneResetButton} onPress={resetWorkflow}>
-                                            <Text style={styles.doneResetButtonText}>DONE / CHECK-IN NEXT</Text>
+                                        <TouchableOpacity style={[styles.shareTicketButton, { borderColor: themeColor }]} onPress={resetWorkflow}>
+                                            <Ionicons name="checkmark-done-circle-outline" size={20} color={themeColor} style={{ marginRight: 8 }} />
+                                            <Text style={[styles.shareTicketButtonText, { color: themeColor }]}>DONE / CHECK-IN NEXT</Text>
                                         </TouchableOpacity>
                                     </ScrollView>
                                 </View>
@@ -1256,98 +1133,65 @@ export default function ValetAttendantWorkflowScreen() {
                                     {/* Search Option Tabs */}
                                     <View style={styles.tabHeader}>
                                         <TouchableOpacity
-                                            style={[styles.tabHeaderItem, searchTab === 'manual' && { borderBottomColor: themeColor, borderBottomWidth: 3 }]}
+                                            style={[styles.tabHeaderItem, (searchTab === 'manual' || searchTab === 'recent') && { borderBottomColor: themeColor, borderBottomWidth: 3 }]}
                                             onPress={() => setSearchTab('manual')}
                                         >
-                                            <Text style={[styles.tabHeaderText, searchTab === 'manual' && { color: themeColor, fontWeight: '800' }]}>
+                                            <Ionicons name="search-outline" size={16} color={(searchTab === 'manual' || searchTab === 'recent') ? themeColor : '#8E8E93'} style={{ marginRight: 6 }} />
+                                            <Text style={[styles.tabHeaderText, (searchTab === 'manual' || searchTab === 'recent') && { color: themeColor, fontWeight: '800' }]}>
                                                 Search Manually
                                             </Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity
-                                            style={[styles.tabHeaderItem, searchTab === 'recent' && { borderBottomColor: themeColor, borderBottomWidth: 3 }]}
-                                            onPress={() => setSearchTab('recent')}
+                                            style={[styles.tabHeaderItem, searchTab === 'scan' && { borderBottomColor: themeColor, borderBottomWidth: 3 }]}
+                                            onPress={() => {
+                                                setSearchTab('scan');
+                                                setReturnStep(1);
+                                            }}
                                         >
-                                            <Text style={[styles.tabHeaderText, searchTab === 'recent' && { color: themeColor, fontWeight: '800' }]}>
-                                                Recent Tickets
+                                            <Ionicons name="qr-code-outline" size={16} color={searchTab === 'scan' ? themeColor : '#8E8E93'} style={{ marginRight: 6 }} />
+                                            <Text style={[styles.tabHeaderText, searchTab === 'scan' && { color: themeColor, fontWeight: '800' }]}>
+                                                Scan QR
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
 
                                     {searchTab === 'manual' ? (
                                         <ScrollView contentContainerStyle={styles.formScrollContainer} keyboardShouldPersistTaps="handled">
-                                            {/* Search Criteria Selector */}
+                                            {/* Unified Search Input with Inline Scan QR Option */}
                                             <View style={styles.formInputGroup}>
-                                                <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Search by</Text>
-                                                <View style={styles.criteriaButtonsRow}>
-                                                    <TouchableOpacity
-                                                        style={[styles.criteriaButton, searchBy === 'mobile' && [styles.criteriaButtonActive, { backgroundColor: themeColor }]]}
-                                                        onPress={() => { setSearchBy('mobile'); setSearchQuery(''); }}
-                                                    >
-                                                        <Feather name="phone" size={14} color={searchBy === 'mobile' ? '#fff' : '#8E8E93'} />
-                                                        <Text style={[styles.criteriaButtonText, searchBy === 'mobile' && { color: '#fff' }]}>Mobile No</Text>
-                                                    </TouchableOpacity>
-
-                                                    <TouchableOpacity
-                                                        style={[styles.criteriaButton, searchBy === 'car' && [styles.criteriaButtonActive, { backgroundColor: themeColor }]]}
-                                                        onPress={() => { setSearchBy('car'); setSearchQuery(''); }}
-                                                    >
-                                                        <Ionicons name="car-outline" size={14} color={searchBy === 'car' ? '#fff' : '#8E8E93'} />
-                                                        <Text style={[styles.criteriaButtonText, searchBy === 'car' && { color: '#fff' }]}>Car No</Text>
-                                                    </TouchableOpacity>
-
-                                                    <TouchableOpacity
-                                                        style={[styles.criteriaButton, searchBy === 'ticket' && [styles.criteriaButtonActive, { backgroundColor: themeColor }]]}
-                                                        onPress={() => { setSearchBy('ticket'); setSearchQuery(''); }}
-                                                    >
-                                                        <Ionicons name="receipt-outline" size={14} color={searchBy === 'ticket' ? '#fff' : '#8E8E93'} />
-                                                        <Text style={[styles.criteriaButtonText, searchBy === 'ticket' && { color: '#fff' }]}>Ticket ID</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
-
-                                            {/* Query Input */}
-                                            <View style={styles.formInputGroup}>
-                                                <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>
-                                                    {searchBy === 'mobile' && 'Enter Mobile Number'}
-                                                    {searchBy === 'car' && 'Enter Vehicle License Plate'}
-                                                    {searchBy === 'ticket' && 'Enter Ticket ID'}
-                                                </Text>
+                                                <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Search Ticket or Scan QR</Text>
                                                 <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                                                    {searchBy === 'mobile' && <Feather name="phone" size={18} color="#8E8E93" style={{ marginRight: 8 }} />}
-                                                    {searchBy === 'car' && <Ionicons name="car-sport-outline" size={18} color="#8E8E93" style={{ marginRight: 8 }} />}
-                                                    {searchBy === 'ticket' && <Ionicons name="receipt-outline" size={18} color="#8E8E93" style={{ marginRight: 8 }} />}
+                                                    <Ionicons name="search-outline" size={18} color="#8E8E93" style={{ marginRight: 8 }} />
 
                                                     <TextInput
                                                         style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                        placeholder={
-                                                            searchBy === 'mobile' ? 'e.g. 9876543210' :
-                                                                searchBy === 'car' ? 'e.g. RJ20CD1234' : 'e.g. WP1234567890'
-                                                        }
+                                                        placeholder="Enter Mobile No, Car No, or Ticket ID"
                                                         placeholderTextColor="#8E8E93"
                                                         value={searchQuery}
                                                         onChangeText={setSearchQuery}
-                                                        keyboardType={searchBy === 'mobile' ? 'phone-pad' : 'default'}
-                                                        autoCapitalize={searchBy === 'mobile' ? 'none' : 'characters'}
+                                                        autoCapitalize="characters"
                                                     />
 
-                                                    {searchBy === 'mobile' && (
-                                                        <TouchableOpacity style={styles.contactsIcon}>
-                                                            <Ionicons name="person-circle-outline" size={22} color={themeColor} />
-                                                        </TouchableOpacity>
-                                                    )}
+                                                    <TouchableOpacity
+                                                        style={[styles.qrScanInlineBtn, { backgroundColor: themeColorLight }]}
+                                                        onPress={() => setReturnStep(1)}
+                                                        activeOpacity={0.75}
+                                                    >
+                                                        <Ionicons name="qr-code" size={16} color={themeColor} />
+                                                        <Text style={[styles.qrScanInlineText, { color: themeColor }]}>Scan QR</Text>
+                                                    </TouchableOpacity>
                                                 </View>
                                             </View>
 
                                             <View style={styles.orDividerRow}>
                                                 <View style={styles.dividerLine} />
-                                                <Text style={styles.dividerText}>OR</Text>
+                                                <Text style={styles.dividerText}>OR QUICK DEMO</Text>
                                                 <View style={styles.dividerLine} />
                                             </View>
 
                                             <TouchableOpacity
                                                 style={[styles.quickSearchBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
                                                 onPress={() => {
-                                                    setSearchBy('car');
                                                     setSearchQuery('RJ20CD1234');
                                                 }}
                                             >
@@ -1358,7 +1202,6 @@ export default function ValetAttendantWorkflowScreen() {
                                             <TouchableOpacity
                                                 style={[styles.quickSearchBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
                                                 onPress={() => {
-                                                    setSearchBy('ticket');
                                                     setSearchQuery('WP1234567890');
                                                 }}
                                             >
@@ -1434,20 +1277,25 @@ export default function ValetAttendantWorkflowScreen() {
                                 </View>
                             )}
 
-                            {/* Return Step 3: Return Request / Arrival Timer */}
+                            {/* Return Step 3: Vehicle Details & Return Button */}
                             {returnStep === 3 && (
                                 <View style={styles.innerContent}>
                                     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.ticketScrollContainer}>
-                                        <View style={styles.timerCircleContainer}>
-                                            <View style={styles.timerCircle}>
-                                                <Text style={styles.timerSubText}>Customer will be arriving in</Text>
-                                                <Text style={styles.timerBigText}>10:00</Text>
-                                                <Text style={styles.timerSubText2}>Minutes</Text>
+                                        {/* Vehicle Banner Image Card */}
+                                        <View style={styles.vehicleImageBannerCard}>
+                                            <Image
+                                                source={{ uri: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800' }}
+                                                style={styles.vehicleBannerImage}
+                                                resizeMode="cover"
+                                            />
+                                            <View style={styles.vehicleBannerBadge}>
+                                                <Ionicons name="car-sport" size={14} color="#fff" style={{ marginRight: 4 }} />
+                                                <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || 'MH02AB1234'}</Text>
                                             </View>
                                         </View>
 
-                                        <Text style={[styles.timerTitle, isDarkMode && { color: '#fff' }]}>Vehicle Prepared Upon Arrival</Text>
-                                        <Text style={styles.timerSubtitle}>Customer Rajesh Kumar requested vehicle return</Text>
+                                        <Text style={[styles.timerTitle, isDarkMode && { color: '#fff' }]}>Vehicle Return Request</Text>
+                                        <Text style={styles.timerSubtitle}>Customer {foundTicket.ownerName} requested vehicle return</Text>
 
                                         <View style={[styles.ticketCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                             <View style={styles.ticketDetailRow}>
@@ -1460,12 +1308,35 @@ export default function ValetAttendantWorkflowScreen() {
                                             </View>
                                             <View style={styles.ticketDetailRow}>
                                                 <Text style={styles.ticketDetailLabel}>Vehicle Model</Text>
-                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.vehicleType} | {foundTicket.ownerName}</Text>
+                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.vehicleType}</Text>
                                             </View>
+                                            <View style={styles.ticketDetailRow}>
+                                                <Text style={styles.ticketDetailLabel}>Customer Name</Text>
+                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.ownerName}</Text>
+                                            </View>
+                                            {foundTicket.phone ? (
+                                                <View style={styles.ticketDetailRow}>
+                                                    <Text style={styles.ticketDetailLabel}>Phone Number</Text>
+                                                    <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.phone}</Text>
+                                                </View>
+                                            ) : null}
+                                            {foundTicket.parkingSite ? (
+                                                <View style={styles.ticketDetailRow}>
+                                                    <Text style={styles.ticketDetailLabel}>Parking Location</Text>
+                                                    <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.parkingSite}</Text>
+                                                </View>
+                                            ) : null}
+                                            {foundTicket.entryTime ? (
+                                                <View style={styles.ticketDetailRow}>
+                                                    <Text style={styles.ticketDetailLabel}>Entry Time</Text>
+                                                    <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.entryTime}</Text>
+                                                </View>
+                                            ) : null}
                                         </View>
 
-                                        <TouchableOpacity style={styles.continueButton} onPress={() => setReturnStep(4)}>
-                                            <Text style={styles.continueButtonText}>I'M ON MY WAY / PREPARE VEHICLE</Text>
+                                        <TouchableOpacity style={[styles.continueButton, { backgroundColor: '#0066FF' }]} onPress={handleConfirmReturn}>
+                                            <Ionicons name="key-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                            <Text style={styles.continueButtonText}>RETURN VEHICLE</Text>
                                         </TouchableOpacity>
 
                                         <TouchableOpacity style={styles.secondaryCancelButton} onPress={resetWorkflow}>
@@ -1530,7 +1401,6 @@ export default function ValetAttendantWorkflowScreen() {
                                                 <Text style={styles.ticketDetailLabel}>Exit Time</Text>
                                                 <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{exitTime}</Text>
                                             </View>
-
                                             <View style={styles.ticketDetailRow}>
                                                 <Text style={styles.ticketDetailLabel}>Duration</Text>
                                                 <Text style={[styles.ticketDetailValue, { color: '#34C759', fontWeight: '800' }]}>1h 45m</Text>
@@ -1538,18 +1408,19 @@ export default function ValetAttendantWorkflowScreen() {
                                         </View>
 
                                         {/* Key return receipt action buttons */}
-                                        <TouchableOpacity style={styles.continueButton} onPress={handleViewReceipt}>
-                                            <Ionicons name="receipt-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                        <TouchableOpacity style={[styles.continueButton, { backgroundColor: themeColor }]} onPress={handleViewReceipt}>
+                                            <Ionicons name="document-text-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
                                             <Text style={styles.continueButtonText}>VIEW RECEIPT</Text>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={[styles.shareTicketButton, { borderColor: '#FA541C' }]} onPress={shareTicket}>
-                                            <Ionicons name="share-outline" size={20} color="#FA541C" style={{ marginRight: 8 }} />
-                                            <Text style={[styles.shareTicketButtonText, { color: '#FA541C' }]}>SHARE RECEIPT</Text>
+                                        <TouchableOpacity style={[styles.shareTicketButton, { borderColor: themeColor }]} onPress={shareTicket}>
+                                            <Ionicons name="share-outline" size={20} color={themeColor} style={{ marginRight: 8 }} />
+                                            <Text style={[styles.shareTicketButtonText, { color: themeColor }]}>SHARE RECEIPT</Text>
                                         </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.doneResetButton} onPress={resetWorkflow}>
-                                            <Text style={styles.doneResetButtonText}>DONE / PROCESS NEXT KEY</Text>
+                                        <TouchableOpacity style={[styles.doneResetButtonStyled, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]} onPress={resetWorkflow}>
+                                            <Ionicons name="checkmark-done-circle-outline" size={20} color={themeColor} style={{ marginRight: 6 }} />
+                                            <Text style={[styles.doneResetButtonStyledText, isDarkMode && { color: '#fff' }]}>DONE / PROCESS NEXT KEY</Text>
                                         </TouchableOpacity>
                                     </ScrollView>
                                 </View>
@@ -1906,6 +1777,54 @@ const styles = StyleSheet.create({
     formScrollContainer: {
         paddingBottom: 24,
     },
+    topCameraPreviewCard: {
+        width: '100%',
+        height: 260,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#000',
+        marginBottom: 18,
+        position: 'relative',
+        borderWidth: 1.5,
+        borderColor: '#0066FF',
+    },
+    topScanOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: 16,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+    },
+    topScanCorners: {
+        position: 'absolute',
+        top: 20,
+        left: 24,
+        right: 24,
+        bottom: 60,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.7)',
+        borderRadius: 14,
+        borderStyle: 'dashed',
+    },
+    topOcrTriggerBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#0066FF',
+        paddingVertical: 9,
+        paddingHorizontal: 18,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    topOcrTriggerText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
     previewImageContainer: {
         alignItems: 'center',
         marginBottom: 20,
@@ -2151,6 +2070,24 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
     },
+    doneResetButtonStyled: {
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: '#F2F2F7',
+        borderWidth: 1.5,
+        borderColor: '#E5E5EA',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginTop: 12,
+        marginBottom: 16,
+    },
+    doneResetButtonStyledText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: '#1C1C1E',
+        letterSpacing: 0.5,
+    },
     stepTrackerContainer: {
         position: 'absolute',
         bottom: 0, // seat directly on the bottom (no BottomTabBar)
@@ -2305,10 +2242,55 @@ const styles = StyleSheet.create({
     contactsIcon: {
         paddingHorizontal: 4,
     },
+    qrScanInlineBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        marginLeft: 6,
+    },
+    qrScanInlineText: {
+        fontSize: 11,
+        fontWeight: '700',
+        marginLeft: 4,
+    },
     orDividerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         marginVertical: 18,
+    },
+    vehicleImageBannerCard: {
+        width: '100%',
+        height: 180,
+        borderRadius: 16,
+        overflow: 'hidden',
+        marginBottom: 16,
+        position: 'relative',
+        backgroundColor: '#1C1C1E',
+        borderWidth: 1,
+        borderColor: '#2C2C2E',
+    },
+    vehicleBannerImage: {
+        width: '100%',
+        height: '100%',
+    },
+    vehicleBannerBadge: {
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        backgroundColor: 'rgba(0, 102, 255, 0.9)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 5,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+    },
+    vehicleBannerBadgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
     dividerLine: {
         flex: 1,
