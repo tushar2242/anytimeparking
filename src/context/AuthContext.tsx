@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import Api, { setAuthReady } from '../Api/api'
+import { showToast } from '../utils/toast'
 import useAuthStore from '../features/auth/auth.service'
 import useThemeStore from '../features/theme/theme.service'
 
@@ -69,19 +70,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [store.user])
 
     const login = async (data: any) => {
-        // console.log('user login is working')
-        const res = await Api.post('/login', data)
-        console.log('Login response:', res)
-        const { access_token, user } = res
+        try {
+            console.log('user login is working')
+            const res = await Api.post('/login', data)
+            console.log('Login response:', res)
 
-        setUser(user)
-        setToken(access_token)
+            const { access_token, user } = res
 
-        await AsyncStorage.setItem('token', access_token)
-        await AsyncStorage.setItem('user', JSON.stringify(user))
+            setUser(user)
+            setToken(access_token)
 
-        setAuthReady(true)
-        router.replace('/')
+            await AsyncStorage.setItem('token', access_token)
+            await AsyncStorage.setItem('user', JSON.stringify(user))
+
+            setAuthReady(true)
+            router.replace('/')
+
+        } catch (error: any) {
+            console.error('Login error:', error)
+            const msg = typeof error === 'string' ? error : error?.response?.data?.message || error?.message || 'Login failed. Please try again.'
+            showToast(msg, 3500, 'error')
+        }
     }
 
     const register = async (data: any) => {

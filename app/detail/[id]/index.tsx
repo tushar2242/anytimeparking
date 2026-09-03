@@ -325,7 +325,7 @@ export default function HotelDetailPage() {
                         <View style={styles.priceRow}>
                             <View>
                                 <Text style={[styles.priceLabel, isDarkMode && { color: '#a0a0a0' }]}>Price per Driver</Text>
-                                <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>₹{price}</Text>
+                                <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>${price}</Text>
                             </View>
                             <View style={styles.driversInfo}>
                                 <Ionicons name="people" size={20} color="#2e7d32" />

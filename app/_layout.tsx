@@ -84,6 +84,20 @@ export default function Layout() {
           />
 
           <Drawer.Screen
+            name="recent-tickets/index"
+            options={{
+              headerShown: false,
+            }}
+          />
+
+          <Drawer.Screen
+            name="recent-tickets/[id]"
+            options={{
+              headerShown: false,
+            }}
+          />
+
+          <Drawer.Screen
             name="login"
             options={{
               drawerItemStyle: { display: 'none' },

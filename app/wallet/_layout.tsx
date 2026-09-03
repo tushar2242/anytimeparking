@@ -39,7 +39,7 @@ const WalletScreen: React.FC = () => {
                         <Text style={styles.balanceLabel}>Total Balance</Text>
                     </View>
 
-                    <Text style={styles.balanceAmount}>₹{walletBalance.toFixed(2)}</Text>
+                    <Text style={styles.balanceAmount}>${walletBalance.toFixed(2)}</Text>
 
                     <View style={styles.cardFooter}>
                         <TouchableOpacity
@@ -59,14 +59,14 @@ const WalletScreen: React.FC = () => {
                         <View style={styles.infoRow}>
                             <View style={styles.infoLeft}>
                                 <View style={styles.iconCircle}>
-                                    <MaterialCommunityIcons name="currency-inr" size={20} color="#43A047" />
+                                    <MaterialCommunityIcons name="currency-usd" size={20} color="#43A047" />
                                 </View>
                                 <View>
                                     <Text style={styles.infoLabel}>Available to Withdraw</Text>
                                     <Text style={styles.infoSubLabel}>Order earnings & bonuses</Text>
                                 </View>
                             </View>
-                            <Text style={styles.infoAmount}>₹{walletBalance.toFixed(2)}</Text>
+                            <Text style={styles.infoAmount}>${walletBalance.toFixed(2)}</Text>
                         </View>
 
                         <View style={styles.divider} />

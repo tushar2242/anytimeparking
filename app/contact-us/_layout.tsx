@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, Linking, StyleSheet, StatusBar } from 're
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import useThemeStore from '@/src/features/theme/theme.service';
 
-const WHATSAPP_NUMBER = '+919876543210';
-const EMAIL_ADDRESS = 'support@example.com';
+const WHATSAPP_NUMBER = '+13105550199';
+const EMAIL_ADDRESS = 'support@anytimevalet.com';
 const instagram = 'error_05__';
 const Telegram = 'error_05';
 

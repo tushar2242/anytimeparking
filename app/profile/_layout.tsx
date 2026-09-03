@@ -427,7 +427,7 @@ export default function DriverProfileForm() {
                             onChangeText={val => handleChange('phone', val)}
                             keyboardType="phone-pad"
                             icon="call-outline"
-                            placeholder="+91 XXXXX XXXXX"
+                            placeholder="(555) 000-0000"
                         />
 
                         {/* Gender Selection */}

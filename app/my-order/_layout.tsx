@@ -298,7 +298,7 @@ export default function MyOrdersPage() {
             { label: 'Today Total Check-Ins', value: displayArrived.length, color: '#FA541C' },
             { label: 'Today Total Returns', value: displayDeparted.length, color: '#E07A5F' },
             { label: 'Current Parked Vehicles', value: displayRemaining.length, color: '#34C759' },
-            { label: 'Estimated Revenue', value: `₹${(displayArrived.length * 120).toFixed(2)}`, color: '#0A84FF' },
+            { label: 'Estimated Revenue', value: `$${(displayArrived.length * 25).toFixed(2)}`, color: '#0A84FF' },
         ]
 
         return (
@@ -319,9 +319,9 @@ export default function MyOrdersPage() {
 
     const renderDriversSummaryView = () => {
         const drivers = [
-            { name: 'Rajesh Kumar', count: 12, rating: '4.8', active: true },
-            { name: 'Vikram Singh', count: 8, rating: '4.6', active: true },
-            { name: 'Amit Patel', count: 5, rating: '4.5', active: false },
+            { name: 'David Miller', count: 12, rating: '4.8', active: true },
+            { name: 'James Wilson', count: 8, rating: '4.6', active: true },
+            { name: 'Sarah Johnson', count: 5, rating: '4.5', active: false },
         ]
 
         return (
@@ -349,11 +349,11 @@ export default function MyOrdersPage() {
 
     const renderPaymentHistoryView = () => {
         const payments = [
-            { plate: 'KA05AB1234', amount: '₹120.00', method: 'UPI', time: '10:35 AM' },
-            { plate: 'MH12CD5678', amount: '₹150.00', method: 'Cash', time: '11:45 AM' },
-            { plate: 'DL8CAK1111', amount: '₹120.00', method: 'Card', time: '12:10 PM' },
-            { plate: 'RJ14XX9876', amount: '₹120.00', method: 'UPI', time: '01:55 PM' },
-            { plate: 'HR26DA2020', amount: '₹120.00', method: 'UPI', time: '02:10 PM' },
+            { plate: '7XYZ123', amount: '$25.00', method: 'Apple Pay', time: '10:35 AM' },
+            { plate: 'ABC-1234', amount: '$30.00', method: 'Credit Card', time: '11:45 AM' },
+            { plate: 'TEX-4589', amount: '$25.00', method: 'Google Pay', time: '12:10 PM' },
+            { plate: 'FL-8821', amount: '$25.00', method: 'Cash', time: '01:55 PM' },
+            { plate: '8KMP492', amount: '$25.00', method: 'Apple Pay', time: '02:10 PM' },
         ]
 
         return (

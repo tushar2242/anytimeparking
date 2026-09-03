@@ -99,7 +99,7 @@ export default function OrderCard({
                                 <Text style={[styles.metaText, isDarkMode && { color: '#a0a0a0' }]}>{valetSlot}</Text>
                             </View>
                         </View>
-                        <Text style={[styles.amount, isDarkMode && { color: '#81c784', backgroundColor: '#1b3b22' }]}>₹{amount}</Text>
+                        <Text style={[styles.amount, isDarkMode && { color: '#81c784', backgroundColor: '#1b3b22' }]}>${amount}</Text>
                     </View>
                 </View>
             </View>

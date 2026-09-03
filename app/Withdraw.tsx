@@ -62,8 +62,8 @@ export default function WithdrawScreen() {
             return;
         }
 
-        if (numAmount < 100) {
-            Alert.alert('Error', 'Minimum withdrawal amount is ₹100.');
+        if (numAmount < 10) {
+            Alert.alert('Error', 'Minimum withdrawal amount is $10.');
             return;
         }
 
@@ -133,7 +133,7 @@ export default function WithdrawScreen() {
                 {/* Balance */}
                 <View style={[styles.card, isDarkMode && { backgroundColor: '#1c1c1e' }]}>
                     <Text style={[styles.label, isDarkMode && { color: '#a0a0a0' }]}>Available Balance</Text>
-                    <Text style={[styles.balance, isDarkMode && { color: '#81c784' }]}>₹{walletBalance.toFixed(2)}</Text>
+                    <Text style={[styles.balance, isDarkMode && { color: '#81c784' }]}>${walletBalance.toFixed(2)}</Text>
                 </View>
 
                 {/* Bank */}
@@ -183,7 +183,7 @@ export default function WithdrawScreen() {
 
                     <TextInput
                         style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
-                        placeholder="₹ Enter amount"
+                        placeholder="$ Enter amount"
                         keyboardType="numeric"
                         value={amount}
                         onChangeText={setAmount}
@@ -191,7 +191,7 @@ export default function WithdrawScreen() {
                     />
 
                     <Text style={[styles.note, isDarkMode && { color: '#888' }]}>
-                        Minimum ₹100 • Maximum ₹{walletBalance.toFixed(2)}
+                        Minimum $10 • Maximum ${walletBalance.toFixed(2)}
                     </Text>
                 </View>
 
@@ -201,24 +201,24 @@ export default function WithdrawScreen() {
 
                     <View style={styles.row}>
                         <Text style={isDarkMode && { color: '#fff' }}>Amount</Text>
-                        <Text style={isDarkMode && { color: '#fff' }}>₹{receiveAmount.toFixed(2)}</Text>
+                        <Text style={isDarkMode && { color: '#fff' }}>${receiveAmount.toFixed(2)}</Text>
                     </View>
 
                     <View style={styles.row}>
                         <Text style={isDarkMode && { color: '#fff' }}>Processing Fee</Text>
-                        <Text style={isDarkMode && { color: '#fff' }}>₹0.00</Text>
+                        <Text style={isDarkMode && { color: '#fff' }}>$0.00</Text>
                     </View>
 
                     <View style={styles.row}>
-                        <Text style={isDarkMode && { color: '#fff' }}>GST</Text>
-                        <Text style={isDarkMode && { color: '#fff' }}>₹0.00</Text>
+                        <Text style={isDarkMode && { color: '#fff' }}>Tax</Text>
+                        <Text style={isDarkMode && { color: '#fff' }}>$0.00</Text>
                     </View>
 
                     <View style={[styles.line, isDarkMode && { backgroundColor: '#2c2c2e' }]} />
 
                     <View style={styles.row}>
                         <Text style={[styles.receive, isDarkMode && { color: '#fff' }]}>{"You'll Receive"}</Text>
-                        <Text style={[styles.receive, isDarkMode && { color: '#81c784' }]}>₹{receiveAmount.toFixed(2)}</Text>
+                        <Text style={[styles.receive, isDarkMode && { color: '#81c784' }]}>${receiveAmount.toFixed(2)}</Text>
                     </View>
                 </View>
 
@@ -228,7 +228,7 @@ export default function WithdrawScreen() {
 
                     <Text style={[styles.note, isDarkMode && { color: '#aaa' }]}>• Withdrawal time: 5-30 minutes</Text>
                     <Text style={[styles.note, isDarkMode && { color: '#aaa' }]}>• Bank account must be verified.</Text>
-                    <Text style={[styles.note, isDarkMode && { color: '#aaa' }]}>• Minimum withdrawal ₹100.</Text>
+                    <Text style={[styles.note, isDarkMode && { color: '#aaa' }]}>• Minimum withdrawal $10.</Text>
                     <Text style={[styles.note, isDarkMode && { color: '#aaa' }]}>• Amount cannot exceed wallet balance.</Text>
                 </View>
 

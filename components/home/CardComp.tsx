@@ -67,9 +67,10 @@ const DriveRequestCard: React.FC<DriveRequestCardProps> = ({
 
     // Dropoff address (real orders don't have dropoff address string, so we map to realistic reference destinations)
     const mockDropoffs = [
-        'Manyata Tech Park, Nagawara, Bengaluru, Karnataka 560045',
-        'Phoenix Marketcity, Whitefield, Bengaluru, Karnataka 560048',
-        'Bellandur Gate, Outer Ring Rd, Bengaluru, Karnataka 560103'
+        '90210 Wilshire Blvd, Beverly Hills, CA 90210',
+        '100 Universal City Plaza, Los Angeles, CA 91608',
+        '350 5th Ave, New York, NY 10118',
+        '700 S Grand Ave, Los Angeles, CA 90017'
     ];
     const dropoffAddr = mockDropoffs[index % mockDropoffs.length];
 
@@ -77,8 +78,8 @@ const DriveRequestCard: React.FC<DriveRequestCardProps> = ({
     const isNew = order.status === 'requested';
 
     // Fare calculation
-    const priceVal = order.amount !== null && order.amount !== undefined ? order.amount : (valet?.amount || 120);
-    const priceStr = `₹${Number(priceVal).toFixed(2)}`;
+    const priceVal = order.amount !== null && order.amount !== undefined ? order.amount : (valet?.amount || 25);
+    const priceStr = `$${Number(priceVal).toFixed(2)}`;
 
     const handlePress = () => {
         const id = order.id || order.order_id || (order as any)._id;
@@ -233,6 +234,7 @@ const DriveRequestCard: React.FC<DriveRequestCardProps> = ({
 
 const styles = StyleSheet.create({
     card: {
+        backgroundColor: '#fff',
         borderRadius: 16,
         marginVertical: 8,
         marginHorizontal: 16,

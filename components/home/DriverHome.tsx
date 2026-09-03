@@ -3,9 +3,11 @@ import { View, StyleSheet, Text, TouchableOpacity, StatusBar, ScrollView, Dimens
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useNavigation } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useThemeStore from '../../src/features/theme/theme.service';
 import useAuthStore from '../../src/features/auth/auth.service';
 import useValetStore from '../../src/features/valetOrder/order.service';
+import { useAuth } from '../../src/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect } from 'react-native-svg';
 
@@ -50,46 +52,54 @@ const CityIllustration = ({ isDarkMode }: { isDarkMode: boolean }) => {
 };
 
 export default function DriverHome() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const navigation = useNavigation();
     const themeStore = useThemeStore();
     const isDarkMode = themeStore.isDarkMode;
 
+    const { user: authContextUser } = useAuth();
     const authStore = useAuthStore();
-    const driverName = authStore.user?.name || 'Deepak chouhan';
-    const driverRole = (authStore.user as any)?.role || 'Valet Parking Manager';
+    const currentUser = authContextUser || authStore.user;
+
+    const driverName = currentUser?.name || currentUser?.phone || 'Valet Staff';
+    const driverRole = currentUser?.role
+        ? (currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1))
+        : 'Valet Driver';
 
     const valetStore = useValetStore();
     const myOrders = valetStore.valet.myOrders || [];
 
     useEffect(() => {
-        // Fetch driver orders to populate live stats if available
+        // Fetch fresh driver orders and user profile on mount
         valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']);
+        authStore.actions.me().catch(() => {});
     }, []);
 
-    // Calculate dynamic stats with fallback values matching the design screenshot
+    // Calculate real dynamic stats directly from user orders without dummy fallbacks
     const today = new Date().toDateString();
-    const todayOrders = myOrders.filter(order => new Date(order.requested_at).toDateString() === today);
+    const todayOrders = myOrders.filter(order => order.requested_at && new Date(order.requested_at).toDateString() === today);
 
-    const ticketsTodayCount = todayOrders.length || 128;
-    const keysReturnedCount = myOrders.filter(order => order.status === 'returned').length || 96;
-    const vehiclesParkedCount = myOrders.filter(order => order.status === 'parked').length || 32;
-    const avgParkingTime = "08h 45m";
+    const ticketsTodayCount = todayOrders.length;
+    const keysReturnedCount = myOrders.filter(order => order.status === 'returned' || order.status === 'completed').length;
+    const vehiclesParkedCount = myOrders.filter(order => order.status === 'parked' || order.status === 'running').length;
 
     const openDrawer = () => {
         navigation.dispatch(DrawerActions.openDrawer());
     };
 
+    const headerPaddingTop = Math.max(insets.top, 20) + 12;
+
     return (
         <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
             <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                backgroundColor={isDarkMode ? '#121212' : '#F5F7FB'}
-                translucent={false}
+                backgroundColor="transparent"
+                translucent={true}
             />
 
             {/* Custom Header Bar */}
-            <View style={[styles.headerBar, { borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
+            <View style={[styles.headerBar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
                 <View style={styles.headerLeft}>
                     <TouchableOpacity
                         activeOpacity={0.8}
@@ -200,7 +210,7 @@ export default function DriverHome() {
                                 <View style={styles.textContainer}>
                                     <Text style={styles.cardTitle}>Key Return</Text>
                                     <Text style={styles.cardDescription}>
-                                        Scan customer QR code to return keys and release vehicle
+                                        Scan customer QR code to release vehicle
                                     </Text>
                                 </View>
                                 <View style={styles.arrowContainer}>
@@ -257,7 +267,7 @@ export default function DriverHome() {
                         </View>
 
                         {/* Avg Parking Time */}
-                        <View style={styles.statColumn}>
+                        {/* <View style={styles.statColumn}>
                             <View style={[styles.statIconBox, { backgroundColor: isDarkMode ? 'rgba(111,66,193,0.15)' : '#F2E6FF' }]}>
                                 <Ionicons name="time" size={18} color="#6F42C1" />
                             </View>
@@ -267,7 +277,7 @@ export default function DriverHome() {
                             <Text style={[styles.statLabel, { color: isDarkMode ? '#8E8E93' : '#6E7A90' }]} numberOfLines={2}>
                                 Avg. Parking Time
                             </Text>
-                        </View>
+                        </View> */}
                     </View>
                 </View>
             </ScrollView>
@@ -284,7 +294,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingTop: 45,
         paddingBottom: 15,
         borderBottomWidth: StyleSheet.hairlineWidth,
     },
@@ -300,6 +309,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#FFFFFF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -331,6 +341,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
+        backgroundColor: '#FFFFFF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -384,6 +395,7 @@ const styles = StyleSheet.create({
     },
     cardWrapper: {
         borderRadius: 24,
+        backgroundColor: '#FFFFFF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.12,
@@ -433,6 +445,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         paddingVertical: 20,
         paddingHorizontal: 12,
+        backgroundColor: '#FFFFFF',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.08,
         shadowRadius: 15,

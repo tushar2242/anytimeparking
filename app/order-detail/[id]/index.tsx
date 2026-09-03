@@ -330,7 +330,7 @@ export default function OrderDetailPage() {
                         <View style={styles.priceRow}>
                             <View>
                                 <Text style={[styles.priceLabel, isDarkMode && { color: '#a0a0a0' }]}>Price per Driver</Text>
-                                <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>₹{Number(order.amount || valet?.amount || 0).toFixed(2)}</Text>
+                                <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>${Number(order.amount || valet?.amount || 0).toFixed(2)}</Text>
                             </View>
                             <View style={styles.driversInfo}>
                                 <Ionicons name="people" size={20} color="#2e7d32" />

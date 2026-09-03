@@ -32,18 +32,18 @@ export default function BottomTabBar() {
     return (
         <View style={[styles.tabBarContainer, isDarkMode ? styles.darkTabBar : styles.lightTabBar]}>
             {/* Tab 1: Dashboard */}
-            <TouchableOpacity 
-                style={styles.tabItem} 
+            <TouchableOpacity
+                style={styles.tabItem}
                 onPress={() => handlePress('/')}
                 activeOpacity={0.7}
             >
-                <Ionicons 
-                    name={isDashboardActive ? "home" : "home-outline"} 
-                    size={24} 
-                    color={getTabColor(isDashboardActive, false)} 
+                <Ionicons
+                    name={isDashboardActive ? "home" : "home-outline"}
+                    size={24}
+                    color={getTabColor(isDashboardActive, false)}
                 />
                 <Text style={[
-                    styles.tabLabel, 
+                    styles.tabLabel,
                     { color: getTabColor(isDashboardActive, false) }
                 ]}>
                     Dashboard
@@ -51,18 +51,18 @@ export default function BottomTabBar() {
             </TouchableOpacity>
 
             {/* Tab 2: Request */}
-            <TouchableOpacity 
-                style={styles.tabItem} 
+            <TouchableOpacity
+                style={styles.tabItem}
                 onPress={() => handlePress('/card-parking')}
                 activeOpacity={0.7}
             >
-                <Ionicons 
-                    name={isQRActive ? "clipboard" : "clipboard-outline"} 
-                    size={24} 
-                    color={getTabColor(isQRActive, true)} 
+                <Ionicons
+                    name={isQRActive ? "clipboard" : "clipboard-outline"}
+                    size={24}
+                    color={getTabColor(isQRActive, true)}
                 />
                 <Text style={[
-                    styles.tabLabel, 
+                    styles.tabLabel,
                     { color: getTabColor(isQRActive, true) }
                 ]}>
                     Request
@@ -70,7 +70,7 @@ export default function BottomTabBar() {
             </TouchableOpacity>
 
             {/* Tab 3: My Orders */}
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
                 style={styles.tabItem} 
                 onPress={() => handlePress('/my-order')}
                 activeOpacity={0.7}
@@ -86,21 +86,21 @@ export default function BottomTabBar() {
                 ]}>
                     My Orders
                 </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             {/* Tab 4: Profile */}
-            <TouchableOpacity 
-                style={styles.tabItem} 
+            <TouchableOpacity
+                style={styles.tabItem}
                 onPress={() => handlePress('/profile')}
                 activeOpacity={0.7}
             >
-                <Ionicons 
-                    name={isProfileActive ? "person" : "person-outline"} 
-                    size={24} 
-                    color={getTabColor(isProfileActive, false)} 
+                <Ionicons
+                    name={isProfileActive ? "person" : "person-outline"}
+                    size={24}
+                    color={getTabColor(isProfileActive, false)}
                 />
                 <Text style={[
-                    styles.tabLabel, 
+                    styles.tabLabel,
                     { color: getTabColor(isProfileActive, false) }
                 ]}>
                     Profile

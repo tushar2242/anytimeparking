@@ -43,6 +43,19 @@ export default function CustomDrawerContent(props: any) {
                 <View style={styles.menu}>
 
                     <DrawerItem
+                        label="Home"
+                        focused={isActive('/') || isActive('/home')}
+                        labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
+                        activeTintColor={isDarkMode ? '#0A84FF' : '#484849'}
+                        inactiveTintColor={isDarkMode ? '#a0a0a0' : '#444'}
+                        activeBackgroundColor={isDarkMode ? '#2c2c2e' : '#eee'}
+                        icon={({ color, size }) => (
+                            <Ionicons name="home-outline" color={color} size={size} />
+                        )}
+                        onPress={() => router.push('/' as any)}
+                    />
+
+                    <DrawerItem
                         label="My Profile"
                         focused={isActive('/profile')}
                         labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
@@ -70,7 +83,7 @@ export default function CustomDrawerContent(props: any) {
 
                     <DrawerItem
                         label="Recent Tickets"
-                        focused={false}
+                        focused={isActive('/recent-tickets')}
                         labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
                         activeTintColor={isDarkMode ? '#0A84FF' : '#484849'}
                         inactiveTintColor={isDarkMode ? '#a0a0a0' : '#444'}
@@ -78,7 +91,7 @@ export default function CustomDrawerContent(props: any) {
                         icon={({ color, size }) => (
                             <Ionicons name="receipt-outline" color={color} size={size} />
                         )}
-                        onPress={() => router.push({ pathname: '/card-parking', params: { mode: 'keyreturn', tab: 'recent' } } as any)}
+                        onPress={() => router.push('/recent-tickets' as any)}
                     />
 
                 </View>

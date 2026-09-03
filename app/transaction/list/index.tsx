@@ -82,7 +82,7 @@ const TransactionListScreen: React.FC = () => {
                     </View>
                     <View style={styles.amountContainer}>
                         <Text style={[styles.amountText, isDebit ? styles.debitText : styles.creditText]}>
-                            {isDebit ? '-' : '+'}{'₹'}{item.amount.toFixed(2)}
+                            {isDebit ? '-' : '+'}{'$'}{item.amount.toFixed(2)}
                         </Text>
                     </View>
                 </View>

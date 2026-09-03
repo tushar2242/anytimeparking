@@ -4,7 +4,6 @@ import { CommonActions } from '@react-navigation/native'
 import { navigationRef } from '../navigation/RootNavigation'
 import { showToast } from '../utils/toast'
 
-// const baseURL = 'http://172.20.10.10:5000'
 export const baseURL = process.env.EXPO_PUBLIC_API_URL || "https://valet-api.botsupport.in";
 
 let authReady = false
@@ -79,30 +78,49 @@ interface ApiError {
     [key: string]: any
 }
 
-export function handleApiError(error: AxiosError<ApiError>): any {
-    let message = error.message
+export function handleApiError(error: AxiosError<ApiError> | any): string {
+    let message = 'An unexpected error occurred. Please try again.'
 
-    if (error.response?.data) {
-        if (error.response.data.error) {
-            message = error.response.data.error
-        } else if (Array.isArray(error.response.data)) {
-            message = error.response.data
-                .map((e, i) => `${i + 1}. ${e?.code} - ${e?.message}`.substring(0, 100))
-                .join('\n')
-        } else if (Array.isArray(error.response.data.errors)) {
-            message = error.response.data.errors
-                .map((e, i) => `${i + 1}. ${e?.rule} - ${e?.message}`.substring(0, 100))
-                .join('\n')
-        } else if (typeof error.response.data === 'object' && error.response.data !== null) {
-            const data = error.response.data as any
-            message = (data.code || data.message)
-                ? `${data.code ?? ''} - ${data.message ?? ''}`.trim()
-                : JSON.stringify(data)
-            message = message.substring(0, 100)
+    if (typeof error === 'string') {
+        message = error
+    } else if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+        message = 'Request timed out. Please check your network connection.'
+    } else if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK' || !error?.response) {
+        message = 'Unable to connect to server. Please check your internet connection or server status.'
+    } else if (error?.response) {
+        const status = error.response.status
+        const data = error.response.data
+
+        if (status === 401) {
+            message = 'Session expired. Please log in again.'
+        } else if (status === 403) {
+            message = 'Access denied. You do not have permission to perform this action.'
+        } else if (status === 404) {
+            message = 'Requested resource was not found.'
+        } else if (status >= 500) {
+            message = 'Server error occurred. Please try again later.'
+        } else if (data) {
+            if (typeof data === 'string') {
+                message = data
+            } else if (data.message && typeof data.message === 'string') {
+                message = data.message
+            } else if (data.error && typeof data.error === 'string') {
+                message = data.error
+            } else if (Array.isArray(data.errors) && data.errors.length > 0) {
+                message = data.errors
+                    .map((e: any) => (typeof e === 'string' ? e : e?.message || e?.rule || 'Invalid field'))
+                    .filter(Boolean)
+                    .join('\n')
+            } else if (Array.isArray(data) && data.length > 0) {
+                message = data
+                    .map((e: any) => (typeof e === 'string' ? e : e?.message || 'Invalid item'))
+                    .filter(Boolean)
+                    .join('\n')
+            }
         }
     }
 
-    showToast(message)
+    showToast(message, 3500, 'error')
     return message
 }
 

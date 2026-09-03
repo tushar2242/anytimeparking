@@ -13,7 +13,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.valetparkingsorganization.valetparking",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "This app requires camera access to scan QR codes and parking tickets.",
+        "NSMicrophoneUsageDescription": "This app requires microphone access for video recording.",
+        "NSPhotoLibraryUsageDescription": "This app requires photo library access to upload parking vehicle images."
       }
     },
     "android": {
@@ -33,11 +36,19 @@
         "INTERNET",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "This app requires camera access to scan QR codes and parking tickets."
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -55,9 +66,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "31d1b850-e82f-43c0-91b0-facdf4defb82"
+        "projectId": "5ab2180b-4519-4146-a07f-3b635bdcc439"
       }
-    },
-    "owner": "aditya_0622"
+    }
   }
 }

@@ -19,16 +19,19 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import useThemeStore from '@/src/features/theme/theme.service';
 import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import Api, { baseURL } from '@/src/Api/api';
+import Api from '@/src/Api/api';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
+import TopStepper from '@/components/card-parking/TopStepper';
+import HeaderNavbar from '@/components/card-parking/HeaderNavbar';
+import CheckInFormStep from '@/components/card-parking/CheckInFormStep';
+import ReturnTicketDetailsStep from '@/components/card-parking/ReturnTicketDetailsStep';
+import { FormState, CameraState, WorkflowState } from '@/components/card-parking/CardParkingTypes';
 import { exportImageToPdf } from '@/src/utils/pdf';
 import { useLocalSearchParams } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 
 const qrcode = require('qrcode-generator');
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface ValetSite {
     id: string;
@@ -52,16 +55,18 @@ interface MockTicket {
 
 
 const BRANDS = [
-    'Mercedes Benz',
+    'Tesla',
+    'Ford',
+    'Chevrolet',
     'BMW',
-    'Audi',
+    'Mercedes-Benz',
     'Toyota',
     'Honda',
-    'Hyundai',
-    'Tata',
-    'Mahindra',
-    'Ford',
-    'Maruti Suzuki',
+    'Audi',
+    'Jeep',
+    'Porsche',
+    'Lexus',
+    'Cadillac',
 ];
 
 
@@ -84,7 +89,7 @@ export default function ValetAttendantWorkflowScreen() {
     };
 
     // Workflow Mode: 'checkin' (Orange theme) or 'keyreturn' (Orange theme)
-    const [workflowMode, setWorkflowMode] = useState<'checkin' | 'keyreturn'>('checkin');
+    const [workflowMode, setWorkflowMode] = useState<'checkin' | 'keyreturn' | 'return'>('checkin');
 
     // Steps state:
     // Check-in: 2 = Check-In Details, 3 = Ticket Generated
@@ -97,12 +102,12 @@ export default function ValetAttendantWorkflowScreen() {
     // ==========================================
     const [selectedSite, setSelectedSite] = useState<ValetSite | null>({
         id: 'site-1',
-        name: 'City Mall',
+        name: 'Beverly Hills Grand Valet',
         badge: 'Active',
-        description: 'Main Entrance, Parking Area A',
+        description: 'Main Plaza, Valet Deck A',
         attendants: 12,
         slots: 45,
-        code: 'CM',
+        code: 'BH',
     });
 
     // 4 capture photo slots
@@ -114,7 +119,7 @@ export default function ValetAttendantWorkflowScreen() {
 
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [licensePlate, setLicensePlate] = useState('');
-    const [brand, setBrand] = useState('Mercedes Benz');
+    const [brand, setBrand] = useState('Mercedes-Benz');
     const [model, setModel] = useState('');
     const [color, setColor] = useState('');
     const [phone, setPhone] = useState('');
@@ -151,13 +156,13 @@ export default function ValetAttendantWorkflowScreen() {
 
     // Found Ticket State
     const [foundTicket, setFoundTicket] = useState<MockTicket>({
-        ticketId: 'WP1234567890',
-        vehicleNumber: 'RJ20CD1234',
+        ticketId: 'WP-983075',
+        vehicleNumber: '7XYZ123',
         vehicleType: 'Car',
-        ownerName: 'Ravi Sharma',
-        entryTime: '18 Aug 2026, 10:30 AM',
-        parkingSite: 'The Valley Mall',
-        phone: '9876543210',
+        ownerName: 'Michael Scott',
+        entryTime: 'Sep 2, 2026 at 11:29 PM',
+        parkingSite: 'Beverly Hills Grand Valet',
+        phone: '(310) 555-0199',
     });
 
     // Camera Permissions
@@ -296,18 +301,33 @@ export default function ValetAttendantWorkflowScreen() {
         }
     };
 
-    const triggerOCR = () => {
+    const triggerOCR = async () => {
         setOcrScanning(true);
+        if (cameraRef.current) {
+            try {
+                const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+                if (photo && photo.uri) {
+                    setPhotoUri(photo.uri);
+                } else {
+                    setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
+                }
+            } catch (err) {
+                setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
+            }
+        } else {
+            setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
+        }
+
         setTimeout(() => {
             setOcrScanning(false);
-            setLicensePlate('MH02AB1234');
-            setBrand('Mercedes Benz');
+            setLicensePlate('7XYZ123');
+            setBrand('Mercedes-Benz');
             setModel('E-Class');
             setColor('Black');
-            setPhone('9876543210');
-            setDriverName('Rajesh Kumar');
-            Alert.alert('OCR Complete', 'Vehicle details successfully extracted from photo.');
-        }, 1200);
+            setPhone('3105550199');
+            setDriverName('Michael Scott');
+            Alert.alert('OCR Complete', 'Vehicle details & photo successfully captured.');
+        }, 1000);
     };
 
     const handleConfirmDetails = async () => {
@@ -380,13 +400,13 @@ export default function ValetAttendantWorkflowScreen() {
             setSearching(false);
             const mockRand = Math.floor(100000 + Math.random() * 900000);
             setFoundTicket({
-                ticketId: `WP${mockRand}`,
-                vehicleNumber: 'MH02AB1234',
+                ticketId: `WP-${mockRand}`,
+                vehicleNumber: '7XYZ123',
                 vehicleType: 'Car',
-                ownerName: 'Rajesh Kumar',
-                entryTime: '18 Aug 2026, 10:30 AM',
-                parkingSite: 'City Mall',
-                phone: '9876543210',
+                ownerName: 'Michael Scott',
+                entryTime: 'Sep 2, 2026 at 11:29 PM',
+                parkingSite: 'Beverly Hills Grand Valet',
+                phone: '(310) 555-0199',
             });
             setReturnStep(3);
         }, 1000);
@@ -402,9 +422,9 @@ export default function ValetAttendantWorkflowScreen() {
         setTimeout(() => {
             setSearching(false);
             const mockRand = Math.floor(100000 + Math.random() * 900000);
-            let car = 'RJ20CD1234';
-            let tId = `WP${mockRand}`;
-            let ph = '9876543210';
+            let car = 'ABC-1234';
+            let tId = `WP-${mockRand}`;
+            let ph = '(212) 555-0143';
 
             const query = searchQuery.trim();
             const cleanQuery = query.toUpperCase();
@@ -420,9 +440,9 @@ export default function ValetAttendantWorkflowScreen() {
                 ticketId: tId,
                 vehicleNumber: car,
                 vehicleType: 'SUV',
-                ownerName: 'Ravi Sharma',
-                entryTime: '18 Aug 2026, 10:30 AM',
-                parkingSite: selectedSite ? selectedSite.name : 'The Valley Mall',
+                ownerName: 'David Miller',
+                entryTime: 'Sep 2, 2026 at 09:15 PM',
+                parkingSite: selectedSite ? selectedSite.name : 'Beverly Hills Grand Valet',
                 phone: ph,
             });
             setReturnStep(3);
@@ -655,68 +675,7 @@ export default function ValetAttendantWorkflowScreen() {
         );
     };
 
-    // ==========================================
-    // Workflow Steps Footer Component
-    // ==========================================
-    const renderStepFooter = () => {
-        const checkinSteps = [
-            { label: 'Login', icon: 'lock-closed' },
-            { label: 'Enter Details', icon: 'create' },
-            { label: 'Ticket + QR', icon: 'qr-code' },
-        ];
 
-        const returnSteps = [
-            { label: 'Scan QR', icon: 'scan' },
-            { label: 'Search Ticket', icon: 'search' },
-            { label: 'Ticket Found', icon: 'receipt' },
-            { label: 'Confirm Key', icon: 'key' },
-            { label: 'Status Return', icon: 'checkmark-circle' },
-        ];
-
-        const steps = workflowMode === 'checkin' ? checkinSteps : returnSteps;
-        const currentActiveStep = workflowMode === 'checkin' ? checkinStep : returnStep;
-
-        return (
-            <View style={styles.stepTrackerContainer}>
-                {steps.map((stepItem, index) => {
-                    const stepNum = index + 1;
-                    // Login step is always completed when we are in card-parking indexing wizard
-                    const isCompleted = workflowMode === 'checkin' ? (stepNum < currentActiveStep) : (stepNum < currentActiveStep);
-                    const isActive = stepNum === currentActiveStep;
-
-                    return (
-                        <View key={index} style={styles.stepItemWrapper}>
-                            <View
-                                style={[
-                                    styles.stepIconCircle,
-                                    isCompleted && { backgroundColor: '#34C759' },
-                                    isActive && { backgroundColor: themeColor, borderWidth: 1.5, borderColor: '#fff' },
-                                    !isActive && !isCompleted && styles.stepIconCircleInactive,
-                                ]}
-                            >
-                                <Ionicons
-                                    name={isCompleted ? 'checkmark' : (stepItem.icon as any)}
-                                    size={15}
-                                    color={isActive || isCompleted ? '#fff' : '#8E8E93'}
-                                />
-                            </View>
-                            <Text
-                                style={[
-                                    styles.stepItemLabel,
-                                    isActive && styles.stepItemLabelActive,
-                                    isCompleted && { color: '#34C759' },
-                                    !isActive && !isCompleted && styles.stepItemLabelInactive,
-                                ]}
-                                numberOfLines={1}
-                            >
-                                {stepNum}. {stepItem.label}
-                            </Text>
-                        </View>
-                    );
-                })}
-            </View>
-        );
-    };
 
     if (permission === null) {
         return (
@@ -733,58 +692,46 @@ export default function ValetAttendantWorkflowScreen() {
         <LayoutWrapper>
             <View style={[styles.container, isDarkMode && { backgroundColor: '#121212' }]}>
 
-                {/* Header Navbar */}
-                <View style={[styles.headerNavbar, isDarkMode && { backgroundColor: '#1C1C1E', borderBottomColor: '#2C2C2E' }]}>
-                    <TouchableOpacity
-                        onPress={() => {
-                            const showBack = (workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 3) ||
-                                (workflowMode === 'keyreturn' && returnStep > 1 && returnStep < 5);
-                            if (showBack) {
-                                if (workflowMode === 'checkin' && checkinStep > 2) {
-                                    setCheckinStep(checkinStep - 1);
-                                } else if (workflowMode === 'keyreturn' && returnStep > 1) {
-                                    setReturnStep(returnStep - 1);
-                                }
-                            } else {
-                                navigation.dispatch(DrawerActions.openDrawer());
+                {/* Top Modular Navigation Bar */}
+                <HeaderNavbar
+                    workflowMode={workflowMode as any}
+                    checkinStep={checkinStep}
+                    returnStep={returnStep}
+                    isDarkMode={isDarkMode}
+                    onBackOrMenuPress={() => {
+                        const showBack = (workflowMode === 'checkin' && checkinStep > 2) ||
+                            (workflowMode === 'keyreturn' && returnStep > 1 && returnStep < 5);
+                        if (showBack) {
+                            if (workflowMode === 'checkin' && checkinStep > 2) {
+                                setCheckinStep(checkinStep - 1);
+                            } else if (workflowMode === 'keyreturn' && returnStep > 1) {
+                                setReturnStep(returnStep - 1);
                             }
-                        }}
-                        style={styles.backButton}
-                    >
-                        {((workflowMode === 'checkin' && checkinStep > 2 && checkinStep < 3) ||
-                            (workflowMode === 'keyreturn' && returnStep > 1 && returnStep < 5)) ? (
-                            <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
-                        ) : (
-                            <Ionicons name="menu" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
-                        )}
-                    </TouchableOpacity>
+                        } else {
+                            navigation.dispatch(DrawerActions.openDrawer());
+                        }
+                    }}
+                    onModeChange={(mode) => setWorkflowMode(mode)}
+                />
 
-                    <View style={styles.headerTitleContainer}>
-                        <Text style={[styles.headerTitle, isDarkMode && { color: '#fff' }]}>
-                            {workflowMode === 'checkin' && (
-                                <>
-                                    {checkinStep === 2 && 'Check-In Details'}
-                                    {checkinStep === 3 && 'Details Completed'}
-                                </>
-                            )}
-                            {workflowMode === 'keyreturn' && (
-                                <>
-                                    {returnStep === 1 && 'Scan Ticket QR'}
-                                    {returnStep === 2 && 'Search Ticket'}
-                                    {returnStep === 3 && 'Return Request'}
-                                    {returnStep === 4 && 'Vehicle Return & Handover'}
-                                    {returnStep === 5 && 'Status: RETURNED'}
-                                </>
-                            )}
-                        </Text>
-                    </View>
-
-                    <TouchableOpacity style={[styles.backButton, { alignItems: 'flex-end' }]} activeOpacity={0.7}>
-                        <Ionicons name="search" size={22} color={isDarkMode ? '#fff' : '#1C1C1E'} />
-                    </TouchableOpacity>
-                </View>
-
-
+                {/* Top Modular Stepper Progress Tracker */}
+                <TopStepper
+                    workflowMode={workflowMode as any}
+                    checkinStep={checkinStep}
+                    returnStep={returnStep}
+                    themeColor={themeColor}
+                    onStepPress={(targetStepNum) => {
+                        if (workflowMode === 'checkin') {
+                            if (targetStepNum === 1 || targetStepNum === 2) setCheckinStep(2);
+                            else if (targetStepNum === 3) setCheckinStep(3);
+                        } else if (workflowMode === 'keyreturn') {
+                            if (targetStepNum === 1) setReturnStep(1);
+                            else if (targetStepNum === 2) setReturnStep(3);
+                            else if (targetStepNum === 3) setReturnStep(4);
+                            else if (targetStepNum === 4) setReturnStep(5);
+                        }
+                    }}
+                />
 
                 {/* Main Content Area */}
                 <View style={styles.contentArea}>
@@ -802,43 +749,68 @@ export default function ValetAttendantWorkflowScreen() {
                                         showsVerticalScrollIndicator={false}
                                         keyboardShouldPersistTaps="handled"
                                     >
-                                        {/* Top Live Camera Preview Box & OCR Autofill */}
+                                        {/* Top Live Camera Preview / Captured Photo Box */}
                                         <View style={styles.topCameraPreviewCard}>
-                                            {permission && permission.granted ? (
-                                                <CameraView
-                                                    ref={cameraRef}
-                                                    style={StyleSheet.absoluteFillObject}
-                                                    facing={cameraFacing}
-                                                />
+                                            {photoUri ? (
+                                                <>
+                                                    <Image
+                                                        source={{ uri: photoUri }}
+                                                        style={StyleSheet.absoluteFillObject}
+                                                        resizeMode="cover"
+                                                    />
+                                                    <View style={styles.topScanOverlay}>
+                                                        <TouchableOpacity
+                                                            style={[
+                                                                styles.topOcrTriggerBtn,
+                                                                { backgroundColor: 'rgba(0, 0, 0, 0.8)', borderColor: '#0066FF', borderWidth: 1.5 },
+                                                            ]}
+                                                            onPress={() => setPhotoUri(null)}
+                                                            activeOpacity={0.8}
+                                                        >
+                                                            <Ionicons name="refresh" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                            <Text style={styles.topOcrTriggerText}>CHANGE / RETAKE PHOTO</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </>
                                             ) : (
-                                                <View style={[StyleSheet.absoluteFillObject, styles.cameraPlaceholderContainer]}>
-                                                    <Ionicons name="videocam-off-outline" size={36} color="#8E8E93" style={{ marginBottom: 6 }} />
-                                                    <Text style={styles.cameraPlaceholderText}>Camera Feed Unavailable</Text>
-                                                    <TouchableOpacity style={styles.grantAccessInlineButton} onPress={handleCameraPermission}>
-                                                        <Text style={styles.grantAccessInlineText}>Enable Camera</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            )}
-
-                                            {/* Viewfinder Overlay & OCR Trigger */}
-                                            <View style={styles.topScanOverlay}>
-                                                <View style={styles.topScanCorners} />
-                                                <TouchableOpacity
-                                                    style={[styles.topOcrTriggerBtn, ocrScanning && { opacity: 0.7 }]}
-                                                    onPress={triggerOCR}
-                                                    disabled={ocrScanning}
-                                                    activeOpacity={0.8}
-                                                >
-                                                    {ocrScanning ? (
-                                                        <ActivityIndicator size="small" color="#fff" style={{ marginRight: 6 }} />
+                                                <>
+                                                    {permission && permission.granted ? (
+                                                        <CameraView
+                                                            ref={cameraRef}
+                                                            style={StyleSheet.absoluteFillObject}
+                                                            facing={cameraFacing}
+                                                        />
                                                     ) : (
-                                                        <Ionicons name="scan" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                        <View style={[StyleSheet.absoluteFillObject, styles.cameraPlaceholderContainer]}>
+                                                            <Ionicons name="videocam-off-outline" size={36} color="#8E8E93" style={{ marginBottom: 6 }} />
+                                                            <Text style={styles.cameraPlaceholderText}>Camera Feed Unavailable</Text>
+                                                            <TouchableOpacity style={styles.grantAccessInlineButton} onPress={handleCameraPermission}>
+                                                                <Text style={styles.grantAccessInlineText}>Enable Camera</Text>
+                                                            </TouchableOpacity>
+                                                        </View>
                                                     )}
-                                                    <Text style={styles.topOcrTriggerText}>
-                                                        {ocrScanning ? 'Scanning Plate...' : 'SCAN & AUTOFILL DETAILS'}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
+
+                                                    {/* Viewfinder Overlay & OCR Trigger */}
+                                                    <View style={styles.topScanOverlay}>
+                                                        <View style={styles.topScanCorners} />
+                                                        <TouchableOpacity
+                                                            style={[styles.topOcrTriggerBtn, ocrScanning && { opacity: 0.7 }]}
+                                                            onPress={triggerOCR}
+                                                            disabled={ocrScanning}
+                                                            activeOpacity={0.8}
+                                                        >
+                                                            {ocrScanning ? (
+                                                                <ActivityIndicator size="small" color="#fff" style={{ marginRight: 6 }} />
+                                                            ) : (
+                                                                <Ionicons name="camera" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                            )}
+                                                            <Text style={styles.topOcrTriggerText}>
+                                                                {ocrScanning ? 'Scanning Plate...' : 'SCAN & AUTOFILL DETAILS'}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </>
+                                            )}
                                         </View>
 
                                         {/* License Plate Number */}
@@ -847,7 +819,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. MH02AB1234"
+                                                    placeholder="e.g. 7XYZ123"
                                                     placeholderTextColor="#8E8E93"
                                                     value={licensePlate}
                                                     onChangeText={setLicensePlate}
@@ -1290,7 +1262,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             />
                                             <View style={styles.vehicleBannerBadge}>
                                                 <Ionicons name="car-sport" size={14} color="#fff" style={{ marginRight: 4 }} />
-                                                <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || 'MH02AB1234'}</Text>
+                                                <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || '7XYZ123'}</Text>
                                             </View>
                                         </View>
 
@@ -1334,14 +1306,28 @@ export default function ValetAttendantWorkflowScreen() {
                                             ) : null}
                                         </View>
 
-                                        <TouchableOpacity style={[styles.continueButton, { backgroundColor: '#0066FF' }]} onPress={handleConfirmReturn}>
-                                            <Ionicons name="key-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                            <Text style={styles.continueButtonText}>RETURN VEHICLE</Text>
-                                        </TouchableOpacity>
+                                        <View style={styles.actionButtonsRow}>
+                                            <TouchableOpacity
+                                                style={styles.returnVehicleBtn}
+                                                onPress={handleConfirmReturn}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                <Text style={styles.returnVehicleBtnText}>RETURN VEHICLE</Text>
+                                            </TouchableOpacity>
 
-                                        <TouchableOpacity style={styles.secondaryCancelButton} onPress={resetWorkflow}>
-                                            <Text style={styles.secondaryCancelButtonText}>CANCEL REQUEST</Text>
-                                        </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.cancelRequestBtn,
+                                                    isDarkMode && { backgroundColor: 'rgba(255, 59, 48, 0.12)', borderColor: 'rgba(255, 59, 48, 0.3)' }
+                                                ]}
+                                                onPress={resetWorkflow}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Ionicons name="close-circle-outline" size={18} color={isDarkMode ? '#FF453A' : '#FF3B30'} style={{ marginRight: 6 }} />
+                                                <Text style={[styles.cancelRequestBtnText, isDarkMode && { color: '#FF453A' }]}>CANCEL</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </ScrollView>
                                 </View>
                             )}
@@ -1407,16 +1393,29 @@ export default function ValetAttendantWorkflowScreen() {
                                             </View>
                                         </View>
 
-                                        {/* Key return receipt action buttons */}
-                                        <TouchableOpacity style={[styles.continueButton, { backgroundColor: themeColor }]} onPress={handleViewReceipt}>
-                                            <Ionicons name="document-text-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                            <Text style={styles.continueButtonText}>VIEW RECEIPT</Text>
-                                        </TouchableOpacity>
+                                        {/* Key return receipt action buttons in one row */}
+                                        <View style={styles.actionButtonsRow}>
+                                            <TouchableOpacity
+                                                style={[styles.returnVehicleBtn, { backgroundColor: themeColor, shadowColor: themeColor }]}
+                                                onPress={handleViewReceipt}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Ionicons name="document-text-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                <Text style={styles.returnVehicleBtnText}>VIEW RECEIPT</Text>
+                                            </TouchableOpacity>
 
-                                        <TouchableOpacity style={[styles.shareTicketButton, { borderColor: themeColor }]} onPress={shareTicket}>
-                                            <Ionicons name="share-outline" size={20} color={themeColor} style={{ marginRight: 8 }} />
-                                            <Text style={[styles.shareTicketButtonText, { color: themeColor }]}>SHARE RECEIPT</Text>
-                                        </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.cancelRequestBtn,
+                                                    { borderColor: themeColor, backgroundColor: isDarkMode ? 'rgba(250, 84, 28, 0.12)' : '#FFF7E6' }
+                                                ]}
+                                                onPress={shareTicket}
+                                                activeOpacity={0.8}
+                                            >
+                                                <Ionicons name="share-outline" size={18} color={themeColor} style={{ marginRight: 6 }} />
+                                                <Text style={[styles.cancelRequestBtnText, { color: themeColor }]}>SHARE </Text>
+                                            </TouchableOpacity>
+                                        </View>
 
                                         <TouchableOpacity style={[styles.doneResetButtonStyled, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]} onPress={resetWorkflow}>
                                             <Ionicons name="checkmark-done-circle-outline" size={20} color={themeColor} style={{ marginRight: 6 }} />
@@ -1429,8 +1428,8 @@ export default function ValetAttendantWorkflowScreen() {
                     )}
                 </View>
 
-                {/* Progress Workflow Tracker Footer */}
-                {renderStepFooter()}
+                {/* Bottom Navigation Tab Bar */}
+                <BottomTabBar />
             </View>
 
             {/* Full Screen Camera Overlay for Photo Capture */}
@@ -2089,19 +2088,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     stepTrackerContainer: {
-        position: 'absolute',
-        bottom: 0, // seat directly on the bottom (no BottomTabBar)
-        left: 0,
-        right: 0,
-        height: 84,
-        backgroundColor: '#081325',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
         paddingHorizontal: 8,
-        borderTopWidth: 1,
-        borderTopColor: '#102A45',
-        zIndex: 900,
+        paddingVertical: 10,
+        backgroundColor: '#081325',
+        borderBottomWidth: 1,
+        borderBottomColor: '#102A45',
     },
     stepItemWrapper: {
         flex: 1,
@@ -2383,6 +2377,50 @@ const styles = StyleSheet.create({
         color: '#1C1C1E',
         minHeight: 88,
         textAlignVertical: 'top',
+    },
+    actionButtonsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    returnVehicleBtn: {
+        flex: 1.2,
+        height: 52,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0066FF',
+        shadowColor: '#0066FF',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+    },
+    returnVehicleBtnText: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+    },
+    cancelRequestBtn: {
+        flex: 0.8,
+        height: 52,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFF5F5',
+        borderWidth: 1.5,
+        borderColor: '#FFCDD2',
+    },
+    cancelRequestBtnText: {
+        color: '#FF3B30',
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     secondaryCancelButton: {
         height: 52,
