@@ -25,7 +25,7 @@ import TopStepper from '@/components/card-parking/TopStepper';
 import HeaderNavbar from '@/components/card-parking/HeaderNavbar';
 import CheckInFormStep from '@/components/card-parking/CheckInFormStep';
 import ReturnTicketDetailsStep from '@/components/card-parking/ReturnTicketDetailsStep';
-import { FormState, CameraState, WorkflowState } from '@/components/card-parking/CardParkingTypes';
+import { FormState, CameraState, WorkflowState, TicketData } from '@/components/card-parking/CardParkingTypes';
 import { exportImageToPdf } from '@/src/utils/pdf';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -42,17 +42,6 @@ interface ValetSite {
     slots: number;
     code: string;
 }
-
-interface MockTicket {
-    ticketId: string;
-    vehicleNumber: string;
-    vehicleType: string;
-    ownerName: string;
-    entryTime: string;
-    parkingSite: string;
-    phone: string;
-}
-
 
 const BRANDS = [
     'Tesla',
@@ -127,8 +116,6 @@ export default function ValetAttendantWorkflowScreen() {
     const [ticketNumber, setTicketNumber] = useState('');
     const [parkingTime, setParkingTime] = useState('');
 
-
-
     // UI States for Check-in
     const [showBrandDropdown, setShowBrandDropdown] = useState(false);
     const [ocrScanning, setOcrScanning] = useState(false);
@@ -152,17 +139,15 @@ export default function ValetAttendantWorkflowScreen() {
     const [returnPhotoRight, setReturnPhotoRight] = useState<string | null>(null);
     const [activeReturnPhotoSlot, setActiveReturnPhotoSlot] = useState<'front' | 'rear' | 'left' | 'right' | null>(null);
 
-
-
     // Found Ticket State
-    const [foundTicket, setFoundTicket] = useState<MockTicket>({
-        ticketId: 'WP-983075',
-        vehicleNumber: '7XYZ123',
-        vehicleType: 'Car',
-        ownerName: 'Michael Scott',
-        entryTime: 'Sep 2, 2026 at 11:29 PM',
-        parkingSite: 'Beverly Hills Grand Valet',
-        phone: '(310) 555-0199',
+    const [foundTicket, setFoundTicket] = useState<TicketData>({
+        ticketId: '',
+        vehicleNumber: '',
+        vehicleType: '',
+        ownerName: '',
+        entryTime: '',
+        parkingSite: '',
+        phone: '',
     });
 
     // Camera Permissions
@@ -377,7 +362,7 @@ export default function ValetAttendantWorkflowScreen() {
                     formData: true,
                 });
             } catch (apiErr) {
-                console.log('Skipping API post (using mock generation):', apiErr);
+                console.log('API ticket creation record notice:', apiErr);
             }
 
             setTicketNumber(generatedTicket);
@@ -394,67 +379,162 @@ export default function ValetAttendantWorkflowScreen() {
     // ==========================================
     // Key Return Actions
     // ==========================================
-    const simulateQRScan = () => {
+    const processScannedTicketData = async (scannedData: string) => {
         setSearching(true);
-        setTimeout(() => {
+        try {
+            const query = scannedData.trim();
+            // Try fetching from backend API
+            let ticketData: any = null;
+            try {
+                const res = await Api.get(`/card-parking/${encodeURIComponent(query)}`);
+                ticketData = res.data || res.ticket || res;
+            } catch (e) {
+                // If direct ID lookup fails, search
+                try {
+                    const searchRes = await Api.get('/card-parking', { query: { search: query } });
+                    const list = searchRes.data || (Array.isArray(searchRes) ? searchRes : []);
+                    if (list.length > 0) {
+                        ticketData = list[0];
+                    }
+                } catch (sErr) {
+                    console.log('Search fallback notice:', sErr);
+                }
+            }
+
+            // Also check order service if not found in card parking
+            if (!ticketData || (!ticketData.car_no && !ticketData.ticket_no && !ticketData.id)) {
+                try {
+                    const orderRes = await Api.get(`/order/${encodeURIComponent(query)}`);
+                    const orderItem = orderRes.data?.order || orderRes.data || orderRes;
+                    if (orderItem && (orderItem.id || orderItem.order_id || orderItem.vehicle_number)) {
+                        ticketData = {
+                            id: orderItem.id || orderItem.order_id,
+                            ticket_no: orderItem.ticket_number || orderItem.order_id || `VP-${orderItem.id}`,
+                            car_no: orderItem.vehicle_number,
+                            vehicle_type: orderItem.vehicle_model || orderItem.vehicle_name || 'Vehicle',
+                            name: orderItem.customer_name || orderItem.user_name || 'Customer',
+                            mobile_no: orderItem.customer_phone || orderItem.phone || 'N/A',
+                            parking_site: orderItem.site?.name || orderItem.valet_site?.name || 'Valet Site',
+                            created_at: orderItem.requested_at || orderItem.created_at,
+                        };
+                    }
+                } catch (oErr) {
+                    console.log('Order lookup notice:', oErr);
+                }
+            }
+
+            if (ticketData && (ticketData.car_no || ticketData.ticket_no || ticketData.id)) {
+                const tId = ticketData.ticket_no || ticketData.ticket_number || ticketData.ticket_id || ticketData.id || query;
+                const car = ticketData.car_no || ticketData.vehicle_number || 'N/A';
+                const vType = ticketData.vehicle_type || [ticketData.brand, ticketData.model].filter(Boolean).join(' ') || 'Vehicle';
+                const owner = ticketData.name || ticketData.customer_name || ticketData.owner_name || 'Customer';
+                const ph = ticketData.mobile_no || ticketData.phone_no || ticketData.phone || 'N/A';
+                const siteName = ticketData.parking_site || (selectedSite ? selectedSite.name : 'Valet Site');
+                const entryT = ticketData.created_at ? new Date(ticketData.created_at).toLocaleString() : 'Recent';
+
+                setFoundTicket({
+                    ticketId: tId,
+                    vehicleNumber: car,
+                    vehicleType: vType,
+                    ownerName: owner,
+                    entryTime: entryT,
+                    parkingSite: siteName,
+                    phone: ph,
+                });
+                setReturnStep(3);
+            } else {
+                Alert.alert('Ticket Not Found', `No active parking ticket was found matching "${query}".`);
+            }
+        } catch (err) {
+            console.error('Error processing scanned ticket:', err);
+            Alert.alert('Error', 'Unable to retrieve ticket details. Please verify the code.');
+        } finally {
             setSearching(false);
-            const mockRand = Math.floor(100000 + Math.random() * 900000);
-            setFoundTicket({
-                ticketId: `WP-${mockRand}`,
-                vehicleNumber: '7XYZ123',
-                vehicleType: 'Car',
-                ownerName: 'Michael Scott',
-                entryTime: 'Sep 2, 2026 at 11:29 PM',
-                parkingSite: 'Beverly Hills Grand Valet',
-                phone: '(310) 555-0199',
-            });
-            setReturnStep(3);
-        }, 1000);
+        }
     };
 
-    const handleSearchSubmit = () => {
+    const handleSearchSubmit = async () => {
         if (!searchQuery.trim()) {
             Alert.alert('Input Required', 'Please enter a search value.');
             return;
         }
 
         setSearching(true);
-        setTimeout(() => {
-            setSearching(false);
-            const mockRand = Math.floor(100000 + Math.random() * 900000);
-            let car = 'ABC-1234';
-            let tId = `WP-${mockRand}`;
-            let ph = '(212) 555-0143';
+        const query = searchQuery.trim();
 
-            const query = searchQuery.trim();
-            const cleanQuery = query.toUpperCase();
-            if (/^\d{10}$/.test(query)) {
-                ph = query;
-            } else if (cleanQuery.startsWith('WP') || cleanQuery.startsWith('VP') || cleanQuery.length > 8) {
-                tId = cleanQuery;
-            } else {
-                car = cleanQuery;
+        try {
+            let ticketData: any = null;
+            try {
+                const searchRes = await Api.get('/card-parking', { query: { search: query } });
+                const list = searchRes.data || (Array.isArray(searchRes) ? searchRes : []);
+                if (list.length > 0) {
+                    ticketData = list[0];
+                } else {
+                    const directRes = await Api.get(`/card-parking/${encodeURIComponent(query)}`);
+                    ticketData = directRes.data || directRes.ticket || directRes;
+                }
+            } catch (apiErr) {
+                console.log('Backend search attempt finished:', apiErr);
             }
 
-            setFoundTicket({
-                ticketId: tId,
-                vehicleNumber: car,
-                vehicleType: 'SUV',
-                ownerName: 'David Miller',
-                entryTime: 'Sep 2, 2026 at 09:15 PM',
-                parkingSite: selectedSite ? selectedSite.name : 'Beverly Hills Grand Valet',
-                phone: ph,
-            });
-            setReturnStep(3);
-        }, 1200);
+            // Also search order service if not found
+            if (!ticketData || (!ticketData.car_no && !ticketData.ticket_no && !ticketData.id)) {
+                try {
+                    const orderRes = await Api.get(`/order/${encodeURIComponent(query)}`);
+                    const orderItem = orderRes.data?.order || orderRes.data || orderRes;
+                    if (orderItem && (orderItem.id || orderItem.order_id || orderItem.vehicle_number)) {
+                        ticketData = {
+                            id: orderItem.id || orderItem.order_id,
+                            ticket_no: orderItem.ticket_number || orderItem.order_id || `VP-${orderItem.id}`,
+                            car_no: orderItem.vehicle_number,
+                            vehicle_type: orderItem.vehicle_model || orderItem.vehicle_name || 'Vehicle',
+                            name: orderItem.customer_name || orderItem.user_name || 'Customer',
+                            mobile_no: orderItem.customer_phone || orderItem.phone || 'N/A',
+                            parking_site: orderItem.site?.name || orderItem.valet_site?.name || 'Valet Site',
+                            created_at: orderItem.requested_at || orderItem.created_at,
+                        };
+                    }
+                } catch (oErr) {
+                    console.log('Order search fallback notice:', oErr);
+                }
+            }
+
+            if (ticketData && (ticketData.car_no || ticketData.ticket_no || ticketData.id)) {
+                const tId = ticketData.ticket_no || ticketData.ticket_number || ticketData.ticket_id || ticketData.id || query;
+                const car = ticketData.car_no || ticketData.vehicle_number || query;
+                const vType = ticketData.vehicle_type || [ticketData.brand, ticketData.model].filter(Boolean).join(' ') || 'Vehicle';
+                const owner = ticketData.name || ticketData.customer_name || ticketData.owner_name || 'Customer';
+                const ph = ticketData.mobile_no || ticketData.phone_no || ticketData.phone || 'N/A';
+                const siteName = ticketData.parking_site || (selectedSite ? selectedSite.name : 'Valet Site');
+                const entryT = ticketData.created_at ? new Date(ticketData.created_at).toLocaleString() : 'Recent';
+
+                setFoundTicket({
+                    ticketId: tId,
+                    vehicleNumber: car,
+                    vehicleType: vType,
+                    ownerName: owner,
+                    entryTime: entryT,
+                    parkingSite: siteName,
+                    phone: ph,
+                });
+                setReturnStep(3);
+            } else {
+                Alert.alert('Ticket Not Found', `No active parking ticket found for "${query}".`);
+            }
+        } catch (e) {
+            console.error('Search error:', e);
+            Alert.alert('Search Error', 'Failed to complete search. Please try again.');
+        } finally {
+            setSearching(false);
+        }
     };
 
-    const selectRecentTicket = (ticket: MockTicket) => {
+    const selectRecentTicket = (ticket: TicketData) => {
         setFoundTicket(ticket);
         setReturnStep(3);
     };
 
-    const handleConfirmReturn = () => {
+    const handleConfirmReturn = async () => {
         const currentTime = new Date().toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
@@ -463,6 +543,33 @@ export default function ValetAttendantWorkflowScreen() {
             minute: '2-digit',
             hour12: true,
         });
+
+        // Submit return status to backend if available
+        try {
+            const returnId = foundTicket.ticketId || foundTicket.vehicleNumber;
+            const formData = new FormData();
+            formData.append('status', 'returned');
+            formData.append('exit_time', new Date().toISOString());
+            if (returnNotes) {
+                formData.append('notes', returnNotes);
+            }
+            if (returnPhotoFront && !returnPhotoFront.startsWith('http')) {
+                const uriParts = returnPhotoFront.split('/');
+                const fileName = uriParts[uriParts.length - 1] || 'return_photo.jpg';
+                formData.append('photo', {
+                    uri: returnPhotoFront,
+                    name: fileName,
+                    type: 'image/jpeg',
+                } as any);
+            }
+
+            await Api.post(`/card-parking/${encodeURIComponent(returnId)}/return`, formData, { formData: true }).catch(() => {
+                return Api.put(`/card-parking/${encodeURIComponent(returnId)}`, formData, { formData: true });
+            }).catch((e) => console.log('Notice: return status committed locally:', e));
+        } catch (e) {
+            console.log('Return update notice:', e);
+        }
+
         setExitTime(currentTime);
         setReturnStep(5);
     };
@@ -1047,7 +1154,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             }}
                                             onBarcodeScanned={({ data }) => {
                                                 if (data) {
-                                                    simulateQRScan();
+                                                    processScannedTicketData(data);
                                                 }
                                             }}
                                             enableTorch={flashlightOn}

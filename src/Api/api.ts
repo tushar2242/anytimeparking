@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
-import { CommonActions } from '@react-navigation/native'
-import { navigationRef } from '../navigation/RootNavigation'
+import { router } from 'expo-router'
 import { showToast } from '../utils/toast'
 
-export const baseURL = process.env.EXPO_PUBLIC_API_URL || "https://valet-api.botsupport.in";
+export const baseURL = process.env.EXPO_PUBLIC_API_URL;
+// console.log('[API] Base URL configured as:', baseURL);
 
 let authReady = false
 
@@ -56,12 +56,7 @@ api.interceptors.response.use(
             await AsyncStorage.removeItem('token')
             await AsyncStorage.removeItem('user')
 
-            navigationRef.current?.dispatch(
-                CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: 'Login' }],
-                })
-            )
+            router.replace('/login' as any)
         }
 
         return Promise.reject(error)
@@ -146,11 +141,12 @@ export interface PostPutOpt {
 
 export async function post<T>(endpoint: string, data: any, opt?: PostPutOpt): Promise<T | any> {
     try {
-        api.defaults.headers['Content-Type'] = opt?.formData
-            ? 'multipart/form-data'
-            : 'application/json'
+        const config = opt?.formData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : { headers: { 'Content-Type': 'application/json' } }
 
-        const response = await api.post(endpoint, data)
+        console.log('baseurl------------', baseURL)
+        const response = await api.post(endpoint, data, config)
         return response.data as any
     } catch (error: any) {
         throw handleApiError(error)
@@ -159,11 +155,11 @@ export async function post<T>(endpoint: string, data: any, opt?: PostPutOpt): Pr
 
 export async function put<T>(endpoint: string, data: any, opt?: PostPutOpt): Promise<T | any> {
     try {
-        api.defaults.headers['Content-Type'] = opt?.formData
-            ? 'multipart/form-data'
-            : 'application/json'
+        const config = opt?.formData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : { headers: { 'Content-Type': 'application/json' } }
 
-        const response: AxiosResponse<ApiResponse<T>> = await api.put(endpoint, data)
+        const response: AxiosResponse<ApiResponse<T>> = await api.put(endpoint, data, config)
         return response.data as any
     } catch (error: any) {
         throw handleApiError(error)
@@ -172,11 +168,11 @@ export async function put<T>(endpoint: string, data: any, opt?: PostPutOpt): Pro
 
 export async function patch<T>(endpoint: string, data: any, opt?: PostPutOpt): Promise<T> {
     try {
-        api.defaults.headers['Content-Type'] = opt?.formData
-            ? 'multipart/form-data'
-            : 'application/json'
+        const config = opt?.formData
+            ? { headers: { 'Content-Type': 'multipart/form-data' } }
+            : { headers: { 'Content-Type': 'application/json' } }
 
-        const response: AxiosResponse<ApiResponse<T>> = await api.patch(endpoint, data)
+        const response: AxiosResponse<ApiResponse<T>> = await api.patch(endpoint, data, config)
         return response.data as any
     } catch (error: any) {
         throw handleApiError(error)

@@ -9,23 +9,18 @@ import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import useAuthStore from '@/src/features/auth/auth.service'
 
+import useValetStore from '@/src/features/valetOrder/order.service'
+
 if (Platform.OS === 'android') {
     UIManager.setLayoutAnimationEnabledExperimental?.(true)
 }
 
-const MOCK_DATA = [
-    { id: '1', name: 'Order #1234' },
-    { id: '2', name: 'Order #5678' },
-    { id: '3', name: 'Valet Service' },
-    { id: '4', name: 'Payment Issue' },
-    { id: '5', name: 'Profile Settings' }
-]
-
 export default function HeaderRight() {
     const router = useRouter()
+    const valetStore = useValetStore()
     const [searchVisible, setSearchVisible] = useState(false)
     const [query, setQuery] = useState('')
-    const [filteredResults, setFilteredResults] = useState([])
+    const [filteredResults, setFilteredResults] = useState<any[]>([])
 
     const toggleSearch = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
@@ -38,15 +33,35 @@ export default function HeaderRight() {
         if (query.trim() === '') {
             setFilteredResults([])
         } else {
-            const results = MOCK_DATA.filter(item =>
-                item.name.toLowerCase().includes(query.toLowerCase())
-            )
-            setFilteredResults(results)
+            const myOrders = valetStore.valet.myOrders || []
+            const orderList = valetStore.valet.list || []
+            const all = [...myOrders, ...orderList]
+            const q = query.toLowerCase()
+            const matches = all
+                .filter((item: any) => {
+                    const idStr = String(item.id || item.order_id || '')
+                    const plate = (item.vehicle_number || '').toLowerCase()
+                    const cust = (item.customer_name || item.name || '').toLowerCase()
+                    return idStr.includes(q) || plate.includes(q) || cust.includes(q)
+                })
+                .map((item: any) => ({
+                    id: String(item.id || item.order_id),
+                    name: `Order #${item.id || item.order_id} - ${item.vehicle_number || item.customer_name || 'Valet'}`
+                }))
+
+            // Deduplicate by id
+            const seen = new Set()
+            const unique = matches.filter(m => {
+                if (!m.id || seen.has(m.id)) return false
+                seen.add(m.id)
+                return true
+            })
+            setFilteredResults(unique)
         }
-    }, [query])
+    }, [query, valetStore.valet.myOrders, valetStore.valet.list])
 
     const handleItemPress = (item: any) => {
-        router.push('/detail/' + item?.id as any)
+        router.push(`/order-detail/${item?.id}` as any)
         toggleSearch()
     }
 

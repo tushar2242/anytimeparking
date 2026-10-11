@@ -8,6 +8,7 @@ import {
     StatusBar,
     Alert,
     Linking,
+    ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,37 +16,86 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useThemeStore from '@/src/features/theme/theme.service';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
 
+import Api from '@/src/Api/api';
+
 export default function TicketDetailsScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const isDarkMode = useThemeStore().isDarkMode;
+    const [loading, setLoading] = React.useState(true);
 
-    // Ticket details data (fallback to mock if specific ID is loaded)
+    const [liveTicket, setLiveTicket] = React.useState<any>(null);
+
+    React.useEffect(() => {
+        if (!id) return;
+        const fetchTicket = async () => {
+            setLoading(true);
+            try {
+                // Try fetching card-parking ticket
+                try {
+                    const res = await Api.get(`/card-parking/${encodeURIComponent(String(id))}`);
+                    const data = res.data || res.ticket || res;
+                    if (data && (data.id || data.ticket_no || data.car_no)) {
+                        setLiveTicket(data);
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Direct card-parking lookup notice:', e);
+                }
+
+                // If not found in card-parking direct endpoint, try order detail
+                try {
+                    const orderRes = await Api.get(`/order/${encodeURIComponent(String(id))}`);
+                    const orderData = orderRes.data?.order || orderRes.data || orderRes;
+                    if (orderData && (orderData.id || orderData.order_id || orderData.vehicle_number)) {
+                        setLiveTicket(orderData);
+                        return;
+                    }
+                } catch (oErr) {
+                    console.log('Order detail lookup notice:', oErr);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTicket();
+    }, [id]);
+
+    // Build unified ticketData from liveTicket
+    const tId = liveTicket?.ticket_no || liveTicket?.ticket_number || liveTicket?.order_id || (typeof id === 'string' ? id : `VP-${liveTicket?.id || ''}`);
+    const carNo = liveTicket?.car_no || liveTicket?.vehicle_number || 'N/A';
+    const vModel = liveTicket?.vehicle_model || liveTicket?.vehicle_type || [liveTicket?.brand, liveTicket?.model].filter(Boolean).join(' ') || 'Vehicle';
+    const vColor = liveTicket?.color || liveTicket?.vehicle_color || 'N/A';
+    const custName = liveTicket?.name || liveTicket?.customer_name || liveTicket?.owner_name || liveTicket?.user_name || 'Customer';
+    const custPhone = liveTicket?.mobile_no || liveTicket?.phone_no || liveTicket?.phone || liveTicket?.customer_phone || 'N/A';
+    const pSite = liveTicket?.parking_site || liveTicket?.site?.name || liveTicket?.valet_site?.name || liveTicket?.location || 'Valet Site';
+    const isRet = liveTicket?.status === 'returned' || liveTicket?.status === 'completed';
+    const reqAt = liveTicket?.created_at ? new Date(liveTicket.created_at).toLocaleString() : (liveTicket?.requested_at ? new Date(liveTicket.requested_at).toLocaleString() : 'Recent');
+    const exitT = liveTicket?.exit_time ? new Date(liveTicket.exit_time).toLocaleString() : (liveTicket?.returned_at ? new Date(liveTicket.returned_at).toLocaleString() : (isRet ? 'Completed' : 'Active Session'));
+
     const ticketData = {
-        ticketId: typeof id === 'string' && id.startsWith('VP') ? id : `VP-983075`,
-        status: 'parked',
-        vehicleNumber: '7XYZ123',
-        vehicleModel: 'Mercedes-Benz E-Class',
-        vehicleColor: 'Obsidian Black',
-        ownerName: 'Michael Scott',
-        phone: '+1 (310) 555-0199',
-        parkingSite: 'LAX Terminal 4 Valet Lot A',
-        attendedBy: 'Alex Morgan (Valet Manager)',
-        entryTime: 'Sep 2, 2026 at 11:29 PM',
-        exitTime: 'Pending / Active Session',
-        duration: '1h 45m',
-        // Key Generation Details
-        keyTagNumber: 'KEY-BOX-A14',
-        keySlotLocation: 'Storage Box Shelf A - Slot #14',
-        keyHandoverStatus: 'Secured in Valet Storage',
-        keyGeneratedAt: 'Sep 2, 2026 at 11:30 PM',
-        // Initial inspection photos checklist
+        ticketId: tId,
+        status: isRet ? 'returned' : 'parked',
+        vehicleNumber: carNo,
+        vehicleModel: vModel,
+        vehicleColor: vColor,
+        ownerName: custName,
+        phone: custPhone,
+        parkingSite: pSite,
+        attendedBy: liveTicket?.driver?.name || liveTicket?.attended_by || 'Valet Driver',
+        entryTime: reqAt,
+        exitTime: exitT,
+        keyTagNumber: liveTicket?.key_slot ? `KEY-${liveTicket.key_slot}` : `KEY-BOX-${String(id || '').slice(-4).toUpperCase()}`,
+        keySlotLocation: liveTicket?.key_slot || (liveTicket?.valet_slot ? `Slot #${liveTicket.valet_slot}` : 'Valet Storage Shelf'),
+        keyHandoverStatus: isRet ? 'Handed over to owner' : 'Secured in Valet Storage',
+        keyGeneratedAt: reqAt,
         inspectionPhotos: [
-            { label: 'Front View', captured: true },
-            { label: 'Rear View', captured: true },
-            { label: 'Left Side', captured: true },
-            { label: 'Right Side', captured: true },
+            { label: 'Front View', captured: !!liveTicket?.photo || !!liveTicket?.photo_front },
+            { label: 'Rear View', captured: !!liveTicket?.photo_rear },
+            { label: 'Left Side', captured: !!liveTicket?.photo_left },
+            { label: 'Right Side', captured: !!liveTicket?.photo_right },
         ],
     };
 
@@ -72,6 +122,42 @@ export default function TicketDetailsScreen() {
             .catch(() => Alert.alert('Share', text));
     };
 
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.centerContainer, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+                <ActivityIndicator size="large" color="#0066FF" />
+                <Text style={[styles.loadingText, isDarkMode && { color: '#8E8E93' }]}>Loading ticket details...</Text>
+            </View>
+        );
+    }
+
+    if (!liveTicket) {
+        return (
+            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+                <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+                <View style={[styles.topNavbar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
+                    </TouchableOpacity>
+                    <Text style={[styles.navTitle, isDarkMode && { color: '#fff' }]}>Ticket Details</Text>
+                    <View style={{ width: 36 }} />
+                </View>
+                <View style={styles.centerContainer}>
+                    <Ionicons name="alert-circle-outline" size={54} color="#8E8E93" style={{ marginBottom: 12 }} />
+                    <Text style={[styles.emptyTitle, isDarkMode && { color: '#fff' }]}>Ticket Not Found</Text>
+                    <Text style={styles.emptySubText}>Could not find details for ticket #{String(id)}.</Text>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, styles.secondaryBtn, { marginTop: 20, paddingHorizontal: 24 }]}
+                        onPress={() => router.back()}
+                    >
+                        <Text style={styles.secondaryBtnText}>GO BACK</Text>
+                    </TouchableOpacity>
+                </View>
+                <BottomTabBar />
+            </View>
+        );
+    }
+
     return (
         <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
@@ -94,8 +180,22 @@ export default function TicketDetailsScreen() {
                             <Ionicons name="receipt" size={16} color="#0066FF" style={{ marginRight: 6 }} />
                             <Text style={styles.ticketIdPillText}>{ticketData.ticketId}</Text>
                         </View>
-                        <View style={[styles.statusBadge, { backgroundColor: 'rgba(255, 133, 27, 0.15)' }]}>
-                            <Text style={[styles.statusBadgeText, { color: '#FF851B' }]}>ACTIVE PARKED</Text>
+                        <View
+                            style={[
+                                styles.statusBadge,
+                                isRet
+                                    ? { backgroundColor: 'rgba(52, 199, 89, 0.15)' }
+                                    : { backgroundColor: 'rgba(255, 133, 27, 0.15)' },
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.statusBadgeText,
+                                    isRet ? { color: '#34C759' } : { color: '#FF851B' },
+                                ]}
+                            >
+                                {isRet ? 'RETURNED' : 'ACTIVE PARKED'}
+                            </Text>
                         </View>
                     </View>
 

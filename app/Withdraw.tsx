@@ -84,14 +84,18 @@ export default function WithdrawScreen() {
 
         setWithdrawing(true);
         try {
-            await Api.post('/driver/withdraw', {
+            await Api.post('/driver/wallet/withdraw', {
                 amount: numAmount,
+            }).catch(() => {
+                return Api.post('/driver/withdraw', {
+                    amount: numAmount,
+                });
             });
 
             showToast('Withdrawal request submitted successfully!');
 
             // Refresh profile wallet balance
-            await authStore.actions.me();
+            await authStore.actions.me().catch(() => {});
             
             router.back();
         } catch (error: any) {

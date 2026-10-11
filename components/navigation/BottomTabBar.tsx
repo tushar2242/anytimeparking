@@ -53,7 +53,7 @@ export default function BottomTabBar() {
             {/* Tab 2: Request */}
             <TouchableOpacity
                 style={styles.tabItem}
-                onPress={() => handlePress('/card-parking')}
+                onPress={() => handlePress('/recent-tickets')}
                 activeOpacity={0.7}
             >
                 <Ionicons
@@ -65,7 +65,7 @@ export default function BottomTabBar() {
                     styles.tabLabel,
                     { color: getTabColor(isQRActive, true) }
                 ]}>
-                    Request
+                    Recent Ticket
                 </Text>
             </TouchableOpacity>
 

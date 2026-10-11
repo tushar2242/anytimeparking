@@ -164,25 +164,52 @@ const useValetStore = create(
                 }
             },
 
-            myOrder: async (status: string | string[]) => {
+            myOrder: async (status?: string | string[]) => {
                 try {
-                    const statuses = Array.isArray(status) ? status : [status];
-                    const promises = statuses.map(s => Api.get('/my-orders', { query: { status: s } }));
-                    const results = await Promise.all(promises);
                     let allOrders: any[] = [];
-                    results.forEach(res => {
-                        const list = res.orders || res.data || (Array.isArray(res) ? res : []);
-                        allOrders = [...allOrders, ...list];
+                    if (!status || (Array.isArray(status) && status.length === 0)) {
+                        try {
+                            const res = await Api.get('/my-orders');
+                            const list = res.orders || res.data || (Array.isArray(res) ? res : []);
+                            allOrders = [...list];
+                        } catch (e) {
+                            console.log('Error fetching all my-orders:', e);
+                        }
+                    } else {
+                        const statuses = Array.isArray(status) ? status : [status];
+                        const promises = statuses.map(s =>
+                            Api.get('/my-orders', { query: { status: s } }).catch(() => null)
+                        );
+                        const results = await Promise.all(promises);
+                        results.forEach(res => {
+                            if (res) {
+                                const list = res.orders || res.data || (Array.isArray(res) ? res : []);
+                                allOrders = [...allOrders, ...list];
+                            }
+                        });
+                    }
+
+                    // Deduplicate by id or order_id
+                    const seen = new Set();
+                    const uniqueOrders = allOrders.filter(o => {
+                        const oid = o.id || o.order_id || (o as any)._id;
+                        if (!oid || seen.has(oid)) return false;
+                        seen.add(oid);
+                        return true;
                     });
 
                     // Sort by requested_at descending
-                    allOrders.sort((a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime());
+                    uniqueOrders.sort((a, b) => {
+                        const timeA = a.requested_at ? new Date(a.requested_at).getTime() : 0;
+                        const timeB = b.requested_at ? new Date(b.requested_at).getTime() : 0;
+                        return timeB - timeA;
+                    });
 
-                    set((prev) => ({
-                        valet: { ...prev.valet, myOrders: allOrders },
+                    set((prev: any) => ({
+                        valet: { ...prev.valet, myOrders: uniqueOrders },
                     }));
                 } catch (error) {
-                    console.log(error)
+                    console.log('Error in myOrder service:', error);
                 }
             },
 

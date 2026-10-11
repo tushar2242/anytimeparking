@@ -1,27 +1,49 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { ScrollView, View, Text, Pressable, StyleSheet, Share, Alert, BackHandler, TouchableOpacity } from 'react-native'
+import { ScrollView, View, Text, Pressable, StyleSheet, Share, Alert, BackHandler, TouchableOpacity, ActivityIndicator } from 'react-native'
 import LayoutWrapper from '@/components/wrapper/LayoutWrapper'
 import { formatDateTime } from '@/src/utils/date'
 import OrderCard from '@/components/card/OrderCard'
 import useValetStore from '@/src/features/valetOrder/order.service'
+import useTransactionStore from '@/src/features/transaction/trans.service'
+import useAuthStore from '@/src/features/auth/auth.service'
 import { useRouter } from 'expo-router'
 import { Ionicons, Feather } from '@expo/vector-icons'
 import useThemeStore from '@/src/features/theme/theme.service'
 import BottomTabBar from '@/components/navigation/BottomTabBar'
 import { showToast } from '@/src/utils/toast'
+import Api from '@/src/Api/api'
 
 export default function MyOrdersPage() {
     const [currentView, setCurrentView] = useState<'menu' | 'overview' | 'cars_arrived' | 'cars_departed' | 'cars_remaining' | 'today_summary' | 'drivers_summary' | 'payment_history'>('menu')
-    const [selectedDate, setSelectedDate] = useState('21 May 2024')
+    const [selectedDate, setSelectedDate] = useState('Today')
     
     const store = useValetStore()
+    const transStore = useTransactionStore()
+    const authStore = useAuthStore()
     const isDarkMode = useThemeStore().isDarkMode
     const router = useRouter()
 
-    // Fetch orders on mount
+    const [cardTickets, setCardTickets] = useState<any[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
+
+    // Fetch orders, transactions, and card tickets on mount
     useEffect(() => {
-        store.myOrder(['upcoming', 'running', 'accepted', 'booked', 'parked', 'returned', 'cancelled'])
-    }, [])
+        setLoadingData(true);
+        Promise.all([
+            store.myOrder(['upcoming', 'running', 'accepted', 'booked', 'parked', 'returned', 'cancelled']).catch(() => null),
+            transStore.get.list().catch(() => null),
+            authStore.actions.me().catch(() => null),
+            (async () => {
+                try {
+                    const res = await Api.get('/card-parking');
+                    const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
+                    setCardTickets(list);
+                } catch (e) {
+                    console.log('Error loading card parkings in my-orders:', e);
+                }
+            })()
+        ]).finally(() => setLoadingData(false));
+    }, []);
 
     // Android Hardware Back Handler
     useEffect(() => {
@@ -54,9 +76,9 @@ export default function MyOrdersPage() {
             "Select Date",
             "Choose a date to view summary",
             [
-                { text: '21 May 2024', onPress: () => setSelectedDate('21 May 2024') },
-                { text: '22 May 2024', onPress: () => setSelectedDate('22 May 2024') },
                 { text: 'Today', onPress: () => setSelectedDate('Today') },
+                { text: 'Yesterday', onPress: () => setSelectedDate('Yesterday') },
+                { text: 'This Month', onPress: () => setSelectedDate('This Month') },
                 { text: 'Cancel', style: 'cancel' }
             ]
         )
@@ -64,6 +86,10 @@ export default function MyOrdersPage() {
 
     const handleShare = async (title: string, list: any[]) => {
         try {
+            if (list.length === 0) {
+                Alert.alert('Share', 'No records to share.');
+                return;
+            }
             const text = list.map((item, idx) => `${idx + 1}. ${item.vehicle_number} - ${item.time}`).join('\n')
             await Share.share({
                 title: title,
@@ -86,46 +112,41 @@ export default function MyOrdersPage() {
         )
     }
 
-    // Build dynamic display lists combining real data with mock fallbacks to match screenshot design
+    // Build real dynamic lists exclusively from live API records
     const allOrders = store.valet.myOrders || []
 
-    const realArrived = allOrders.filter(o => o.status === 'parked' || o.status === 'returned').map(o => ({
-        vehicle_number: o.vehicle_number,
-        time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '10:30 AM'
-    }))
-    const displayArrived = realArrived.length > 0 ? realArrived : [
-        { vehicle_number: 'KA05AB1234', time: '10:30 AM' },
-        { vehicle_number: 'MH12CD5678', time: '10:45 AM' },
-        { vehicle_number: 'DL8CAK1111', time: '11:00 AM' },
-        { vehicle_number: 'RJ14XX9876', time: '11:30 AM' },
-        { vehicle_number: 'HR26DA2020', time: '11:45 AM' },
-    ]
+    const displayArrived = [
+        ...allOrders.filter(o => o.status === 'parked' || o.status === 'returned' || o.status === 'completed').map(o => ({
+            vehicle_number: o.vehicle_number || 'N/A',
+            time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : (o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A')
+        })),
+        ...cardTickets.map(t => ({
+            vehicle_number: t.car_no || t.vehicle_number || 'N/A',
+            time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+        }))
+    ];
 
-    const realDeparted = allOrders.filter(o => o.status === 'returned').map(o => ({
-        vehicle_number: o.vehicle_number,
-        time: o.returned_at ? new Date(o.returned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '01:10 PM'
-    }))
-    const displayDeparted = realDeparted.length > 0 ? realDeparted : [
-        { vehicle_number: 'KA05AB1234', time: '01:10 PM' },
-        { vehicle_number: 'MH12CD5678', time: '01:25 PM' },
-        { vehicle_number: 'DL8CAK1111', time: '01:40 PM' },
-        { vehicle_number: 'RJ14XX9876', time: '01:55 PM' },
-        { vehicle_number: 'HR26DA2020', time: '02:10 PM' },
-    ]
+    const displayDeparted = [
+        ...allOrders.filter(o => o.status === 'returned' || o.status === 'completed').map(o => ({
+            vehicle_number: o.vehicle_number || 'N/A',
+            time: o.returned_at ? new Date(o.returned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+        })),
+        ...cardTickets.filter(t => t.status === 'returned').map(t => ({
+            vehicle_number: t.car_no || t.vehicle_number || 'N/A',
+            time: t.exit_time ? new Date(t.exit_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+        }))
+    ];
 
-    const realRemaining = allOrders.filter(o => o.status === 'parked').map(o => ({
-        vehicle_number: o.vehicle_number,
-        time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '10:30 AM'
-    }))
-    const displayRemaining = realRemaining.length > 0 ? realRemaining : [
-        { vehicle_number: 'GJ01XX1234', time: '10:30 AM' },
-        { vehicle_number: 'MH01AB5678', time: '10:45 AM' },
-        { vehicle_number: 'KA03CD7890', time: '11:00 AM' },
-        { vehicle_number: 'DL10EF1122', time: '11:15 AM' },
-        { vehicle_number: 'PB08GH3344', time: '11:30 AM' },
-        { vehicle_number: 'UP16IJ5566', time: '11:45 AM' },
-        { vehicle_number: 'HR10KL7788', time: '12:00 PM' },
-    ]
+    const displayRemaining = [
+        ...allOrders.filter(o => o.status === 'parked' || o.status === 'running' || o.status === 'accepted' || o.status === 'booked').map(o => ({
+            vehicle_number: o.vehicle_number || 'N/A',
+            time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : (o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A')
+        })),
+        ...cardTickets.filter(t => t.status !== 'returned').map(t => ({
+            vehicle_number: t.car_no || t.vehicle_number || 'N/A',
+            time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+        }))
+    ];
 
     // Render Sub-Views
     const renderMenuView = () => {
@@ -177,7 +198,7 @@ export default function MyOrdersPage() {
 
                 <View style={styles.overviewSubheader}>
                     <Text style={[styles.overviewTitle, isDarkMode && { color: '#fff' }]}>Order Summary</Text>
-                    <Text style={styles.overviewSubtitle}>All time summary of vehicles</Text>
+                    <Text style={styles.overviewSubtitle}>Live summary of vehicles</Text>
                 </View>
 
                 {/* Arrived Card */}
@@ -269,36 +290,52 @@ export default function MyOrdersPage() {
 
                 {/* List Container */}
                 <View style={[styles.vehicleListContainer, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}>
-                    {list.map((item, idx) => (
-                        <View key={idx} style={[styles.vehicleListItem, idx < list.length - 1 && styles.vehicleListItemDivider, idx < list.length - 1 && isDarkMode && { borderBottomColor: '#2c2c2e' }]}>
-                            <Text style={[styles.vehicleListPlateText, isDarkMode && { color: '#fff' }]}>
-                                {item.vehicle_number}
-                            </Text>
-                            <Text style={styles.vehicleListTimeText}>
-                                {item.time}
-                            </Text>
+                    {list.length === 0 ? (
+                        <View style={{ paddingVertical: 28, alignItems: 'center' }}>
+                            <Ionicons name="car-outline" size={36} color="#8E8E93" style={{ marginBottom: 8 }} />
+                            <Text style={[styles.emptySubtitle, isDarkMode && { color: '#8E8E93' }]}>No vehicles recorded in this category.</Text>
                         </View>
-                    ))}
+                    ) : (
+                        list.map((item, idx) => (
+                            <View key={idx} style={[styles.vehicleListItem, idx < list.length - 1 && styles.vehicleListItemDivider, idx < list.length - 1 && isDarkMode && { borderBottomColor: '#2c2c2e' }]}>
+                                <Text style={[styles.vehicleListPlateText, isDarkMode && { color: '#fff' }]}>
+                                    {item.vehicle_number}
+                                </Text>
+                                <Text style={styles.vehicleListTimeText}>
+                                    {item.time}
+                                </Text>
+                            </View>
+                        ))
+                    )}
                 </View>
 
                 {/* Download/Share Button */}
-                <TouchableOpacity 
-                    style={[styles.downloadShareBtn, { backgroundColor: themeColor }]} 
-                    onPress={() => handleShare(title, list)}
-                >
-                    <Ionicons name="share-social-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                    <Text style={styles.downloadShareBtnText}>Download / Share</Text>
-                </TouchableOpacity>
+                {list.length > 0 && (
+                    <TouchableOpacity 
+                        style={[styles.downloadShareBtn, { backgroundColor: themeColor }]} 
+                        onPress={() => handleShare(title, list)}
+                    >
+                        <Ionicons name="share-social-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.downloadShareBtnText}>Download / Share</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         )
     }
 
     const renderTodaySummaryView = () => {
+        // Calculate total earnings from live transactions and orders
+        const transList = transStore.transaction.list || [];
+        const earningsTotal = transList
+            .filter((t: any) => t.type !== 'withdraw' && t.status === 'completed')
+            .reduce((acc: number, item: any) => acc + (Number(item.amount) || 0), 0);
+        const revenueDisplay = `$${earningsTotal.toFixed(2)}`;
+
         const summaryData = [
-            { label: 'Today Total Check-Ins', value: displayArrived.length, color: '#FA541C' },
-            { label: 'Today Total Returns', value: displayDeparted.length, color: '#E07A5F' },
+            { label: 'Total Check-Ins', value: displayArrived.length, color: '#FA541C' },
+            { label: 'Total Returns', value: displayDeparted.length, color: '#E07A5F' },
             { label: 'Current Parked Vehicles', value: displayRemaining.length, color: '#34C759' },
-            { label: 'Estimated Revenue', value: `$${(displayArrived.length * 25).toFixed(2)}`, color: '#0A84FF' },
+            { label: 'Completed Earnings', value: revenueDisplay, color: '#0A84FF' },
         ]
 
         return (
@@ -318,24 +355,30 @@ export default function MyOrdersPage() {
     }
 
     const renderDriversSummaryView = () => {
+        const currentUser = authStore.user;
+        const totalHandled = displayArrived.length;
+
         const drivers = [
-            { name: 'David Miller', count: 12, rating: '4.8', active: true },
-            { name: 'James Wilson', count: 8, rating: '4.6', active: true },
-            { name: 'Sarah Johnson', count: 5, rating: '4.5', active: false },
-        ]
+            {
+                name: currentUser?.name || currentUser?.phone || 'Current Driver',
+                count: totalHandled,
+                role: currentUser?.role || 'Valet Driver',
+                active: true
+            },
+        ];
 
         return (
             <View style={styles.listSectionContainer}>
-                <Text style={[styles.vehicleListHeader, isDarkMode && { color: '#fff' }]}>Valet Drivers Status</Text>
+                <Text style={[styles.vehicleListHeader, isDarkMode && { color: '#fff' }]}>Valet Staff Status</Text>
                 <View style={[styles.vehicleListContainer, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}>
                     {drivers.map((drv, idx) => (
                         <View key={idx} style={[styles.vehicleListItem, idx < drivers.length - 1 && styles.vehicleListItemDivider, idx < drivers.length - 1 && isDarkMode && { borderBottomColor: '#2c2c2e' }]}>
                             <View>
                                 <Text style={[styles.vehicleListPlateText, isDarkMode && { color: '#fff' }]}>{drv.name}</Text>
-                                <Text style={styles.vehicleListTimeText}>Rating: ⭐{drv.rating}</Text>
+                                <Text style={styles.vehicleListTimeText}>{drv.role}</Text>
                             </View>
                             <View style={{ alignItems: 'flex-end' }}>
-                                <Text style={[styles.vehicleListPlateText, { color: '#FA541C' }]}>{drv.count} cars</Text>
+                                <Text style={[styles.vehicleListPlateText, { color: '#FA541C' }]}>{drv.count} cars handled</Text>
                                 <Text style={[styles.vehicleListTimeText, { color: drv.active ? '#34C759' : '#8E8E93' }]}>
                                     {drv.active ? 'Active' : 'Offline'}
                                 </Text>
@@ -348,27 +391,37 @@ export default function MyOrdersPage() {
     }
 
     const renderPaymentHistoryView = () => {
-        const payments = [
-            { plate: '7XYZ123', amount: '$25.00', method: 'Apple Pay', time: '10:35 AM' },
-            { plate: 'ABC-1234', amount: '$30.00', method: 'Credit Card', time: '11:45 AM' },
-            { plate: 'TEX-4589', amount: '$25.00', method: 'Google Pay', time: '12:10 PM' },
-            { plate: 'FL-8821', amount: '$25.00', method: 'Cash', time: '01:55 PM' },
-            { plate: '8KMP492', amount: '$25.00', method: 'Apple Pay', time: '02:10 PM' },
-        ]
+        const transList = transStore.transaction.list || [];
 
         return (
             <View style={styles.listSectionContainer}>
                 <Text style={[styles.vehicleListHeader, isDarkMode && { color: '#fff' }]}>Recent Transactions</Text>
                 <View style={[styles.vehicleListContainer, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}>
-                    {payments.map((pay, idx) => (
-                        <View key={idx} style={[styles.vehicleListItem, idx < payments.length - 1 && styles.vehicleListItemDivider, idx < payments.length - 1 && isDarkMode && { borderBottomColor: '#2c2c2e' }]}>
-                            <View>
-                                <Text style={[styles.vehicleListPlateText, isDarkMode && { color: '#fff' }]}>{pay.plate}</Text>
-                                <Text style={styles.vehicleListTimeText}>{pay.time} • {pay.method}</Text>
-                            </View>
-                            <Text style={[styles.vehicleListPlateText, { color: '#34C759' }]}>{pay.amount}</Text>
+                    {transList.length === 0 ? (
+                        <View style={{ paddingVertical: 28, alignItems: 'center' }}>
+                            <Ionicons name="receipt-outline" size={36} color="#8E8E93" style={{ marginBottom: 8 }} />
+                            <Text style={[styles.emptySubtitle, isDarkMode && { color: '#8E8E93' }]}>No payment transactions recorded.</Text>
                         </View>
-                    ))}
+                    ) : (
+                        transList.map((pay: any, idx: number) => {
+                            const isDebit = pay.type === 'withdraw' || pay.type === 'payment';
+                            return (
+                                <View key={pay.id || idx} style={[styles.vehicleListItem, idx < transList.length - 1 && styles.vehicleListItemDivider, idx < transList.length - 1 && isDarkMode && { borderBottomColor: '#2c2c2e' }]}>
+                                    <View>
+                                        <Text style={[styles.vehicleListPlateText, isDarkMode && { color: '#fff' }]}>
+                                            {pay.reference_id || `TXN #${pay.id || idx + 1}`}
+                                        </Text>
+                                        <Text style={styles.vehicleListTimeText}>
+                                            {pay.created_at ? new Date(pay.created_at).toLocaleDateString() : 'Recent'} • {pay.type ? (pay.type.charAt(0).toUpperCase() + pay.type.slice(1)) : 'Payment'}
+                                        </Text>
+                                    </View>
+                                    <Text style={[styles.vehicleListPlateText, { color: isDebit ? '#fa5252' : '#34C759' }]}>
+                                        {isDebit ? '-' : '+'}${Number(pay.amount || 0).toFixed(2)}
+                                    </Text>
+                                </View>
+                            );
+                        })
+                    )}
                 </View>
             </View>
         )

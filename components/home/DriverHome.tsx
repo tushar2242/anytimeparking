@@ -10,6 +10,7 @@ import useValetStore from '../../src/features/valetOrder/order.service';
 import { useAuth } from '../../src/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect } from 'react-native-svg';
+import Api from '../../src/Api/api';
 
 const { width } = Dimensions.get('window');
 
@@ -60,7 +61,7 @@ export default function DriverHome() {
 
     const { user: authContextUser } = useAuth();
     const authStore = useAuthStore();
-    const currentUser = authContextUser || authStore.user;
+    const currentUser = (authContextUser || authStore.user) as any;
 
     const driverName = currentUser?.name || currentUser?.phone || 'Valet Staff';
     const driverRole = currentUser?.role
@@ -69,20 +70,33 @@ export default function DriverHome() {
 
     const valetStore = useValetStore();
     const myOrders = valetStore.valet.myOrders || [];
+    const [cardParkings, setCardParkings] = React.useState<any[]>([]);
 
     useEffect(() => {
         // Fetch fresh driver orders and user profile on mount
         valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']);
         authStore.actions.me().catch(() => {});
+        (async () => {
+            try {
+                const res = await Api.get('/card-parking');
+                const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
+                setCardParkings(list);
+            } catch (e) {
+                console.log('Error loading card parkings in home:', e);
+            }
+        })();
     }, []);
 
-    // Calculate real dynamic stats directly from user orders without dummy fallbacks
+    // Calculate real dynamic stats directly from user orders and card tickets
     const today = new Date().toDateString();
     const todayOrders = myOrders.filter(order => order.requested_at && new Date(order.requested_at).toDateString() === today);
+    const todayCards = cardParkings.filter(t => t.created_at && new Date(t.created_at).toDateString() === today);
 
-    const ticketsTodayCount = todayOrders.length;
-    const keysReturnedCount = myOrders.filter(order => order.status === 'returned' || order.status === 'completed').length;
-    const vehiclesParkedCount = myOrders.filter(order => order.status === 'parked' || order.status === 'running').length;
+    const ticketsTodayCount = todayOrders.length + todayCards.length;
+    const keysReturnedCount = myOrders.filter(order => order.status === 'returned' || order.status === 'completed').length +
+        cardParkings.filter(t => t.status === 'returned').length;
+    const vehiclesParkedCount = myOrders.filter(order => order.status === 'parked' || order.status === 'running').length +
+        cardParkings.filter(t => t.status !== 'returned').length;
 
     const openDrawer = () => {
         navigation.dispatch(DrawerActions.openDrawer());

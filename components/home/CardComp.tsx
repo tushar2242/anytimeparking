@@ -54,31 +54,19 @@ const DriveRequestCard: React.FC<DriveRequestCardProps> = ({
         }
     }
 
-    // Pickup address logic (use real site address if present, otherwise fallback to reference mocks)
-    let pickupAddr = valet?.address ? `${valet.name ? valet.name + ', ' : ''}${valet.address}${valet.city ? ', ' + valet.city : ''}` : '';
-    const mockPickups = [
-        'City Mall, MG Road, Bengaluru, Karnataka 560001',
-        'UB City, Vittal Mallya Rd, Bengaluru, Karnataka 560001',
-        'Forum Mall, Koramangala, Bengaluru, Karnataka 560034'
-    ];
-    if (!pickupAddr || pickupAddr.trim().length < 8) {
-        pickupAddr = mockPickups[index % mockPickups.length];
-    }
+    // Pickup address logic (use real site address)
+    const siteName = valet?.name ? `${valet.name}, ` : '';
+    const siteCity = valet?.city ? `, ${valet.city}` : '';
+    const pickupAddr = valet?.address ? `${siteName}${valet.address}${siteCity}` : (valet?.name || 'Pickup at valet entrance');
 
-    // Dropoff address (real orders don't have dropoff address string, so we map to realistic reference destinations)
-    const mockDropoffs = [
-        '90210 Wilshire Blvd, Beverly Hills, CA 90210',
-        '100 Universal City Plaza, Los Angeles, CA 91608',
-        '350 5th Ave, New York, NY 10118',
-        '700 S Grand Ave, Los Angeles, CA 90017'
-    ];
-    const dropoffAddr = mockDropoffs[index % mockDropoffs.length];
+    // Dropoff / parking location logic
+    const dropoffAddr = (order as any).dropoff_address || (order as any).drop_address || (valet?.name ? `${valet.name} Parking Deck` : 'Assigned Valet Parking Bay');
 
     // Status: show Decline/Accept buttons only if requested (new request)
     const isNew = order.status === 'requested';
 
     // Fare calculation
-    const priceVal = order.amount !== null && order.amount !== undefined ? order.amount : (valet?.amount || 25);
+    const priceVal = order.amount !== null && order.amount !== undefined ? order.amount : (valet?.amount || 0);
     const priceStr = `$${Number(priceVal).toFixed(2)}`;
 
     const handlePress = () => {

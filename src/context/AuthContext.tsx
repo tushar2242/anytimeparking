@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const login = async (data: any) => {
         try {
-            console.log('user login is working')
+            console.log('---------user login is working')
             const res = await Api.post('/login', data)
             console.log('Login response:', res)
 

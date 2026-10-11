@@ -15,74 +15,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useThemeStore from '@/src/features/theme/theme.service';
 import useValetStore from '@/src/features/valetOrder/order.service';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
+import Api from '@/src/Api/api';
 
-// Mock/Sample Recent Tickets Data as fallback when API data is empty
-const MOCK_TICKETS = [
-    {
-        id: '1',
-        ticketId: 'VP-983075',
-        vehicleNumber: '7XYZ123',
-        vehicleModel: 'Mercedes-Benz E-Class',
-        vehicleColor: 'Black',
-        ownerName: 'Michael Scott',
-        phone: '(310) 555-0199',
-        parkingSite: 'LAX Terminal 4 Valet Lot A',
-        keySlot: 'Key Box #A-14',
-        status: 'parked',
-        requestedAt: 'Sep 2, 2026 at 11:29 PM',
-        entryTime: '11:29 PM',
-        exitTime: null,
-        duration: '1h 45m',
-    },
-    {
-        id: '2',
-        ticketId: 'VP-882194',
-        vehicleNumber: 'ABC-1234',
-        vehicleModel: 'BMW 5 Series',
-        vehicleColor: 'Silver',
-        ownerName: 'David Miller',
-        phone: '(212) 555-0143',
-        parkingSite: 'Beverly Hills Grand Valet',
-        keySlot: 'Key Box #B-08',
-        status: 'returned',
-        requestedAt: 'Sep 2, 2026 at 09:15 PM',
-        entryTime: '09:15 PM',
-        exitTime: '10:45 PM',
-        duration: '1h 30m',
-    },
-    {
-        id: '3',
-        ticketId: 'VP-774102',
-        vehicleNumber: 'TEX-4589',
-        vehicleModel: 'Tesla Model S',
-        vehicleColor: 'White',
-        ownerName: 'Sarah Johnson',
-        phone: '(415) 555-2671',
-        parkingSite: 'Downtown Plaza Valet',
-        keySlot: 'Key Box #C-02',
-        status: 'parked',
-        requestedAt: 'Sep 2, 2026 at 08:30 PM',
-        entryTime: '08:30 PM',
-        exitTime: null,
-        duration: '3h 15m',
-    },
-    {
-        id: '4',
-        ticketId: 'VP-663219',
-        vehicleNumber: 'FL-8821',
-        vehicleModel: 'Ford Explorer',
-        vehicleColor: 'Grey',
-        ownerName: 'James Wilson',
-        phone: '(305) 555-8833',
-        parkingSite: 'Manhattan Center Valet',
-        keySlot: 'Key Box #A-05',
-        status: 'returned',
-        requestedAt: 'Sep 2, 2026 at 06:00 PM',
-        entryTime: '06:00 PM',
-        exitTime: '08:15 PM',
-        duration: '2h 15m',
-    },
-];
+export interface TicketItem {
+    id: string;
+    ticketId: string;
+    vehicleNumber: string;
+    vehicleModel: string;
+    vehicleColor: string;
+    ownerName: string;
+    phone: string;
+    parkingSite: string;
+    keySlot: string;
+    status: 'parked' | 'returned';
+    requestedAt: string;
+    entryTime: string;
+    exitTime: string | null;
+    duration: string;
+}
 
 export default function RecentTicketsScreen() {
     const router = useRouter();
@@ -93,35 +43,62 @@ export default function RecentTicketsScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<'all' | 'parked' | 'returned'>('all');
     const [loading, setLoading] = useState(false);
+    const [cardTickets, setCardTickets] = useState<any[]>([]);
 
     const storeOrders = valetStore.valet.myOrders || [];
 
     useEffect(() => {
         setLoading(true);
-        valetStore
-            .myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled'])
-            .finally(() => setLoading(false));
+        Promise.all([
+            valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']).catch(() => null),
+            (async () => {
+                try {
+                    const res = await Api.get('/card-parking');
+                    const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
+                    setCardTickets(list);
+                } catch (e) {
+                    console.log('Error fetching card parkings in recent tickets:', e);
+                }
+            })()
+        ]).finally(() => setLoading(false));
     }, []);
 
-    // Format raw order data or fallback to MOCK_TICKETS
-    const ticketsList = storeOrders.length > 0
-        ? storeOrders.map((ord: any) => ({
-            id: String(ord.id || ord.order_id || Math.random()),
-            ticketId: ord.ticket_number || ord.order_id || `VP-${ord.id || '983075'}`,
-            vehicleNumber: ord.vehicle_number || '7XYZ123',
-            vehicleModel: ord.vehicle_model || ord.vehicle_name || 'Valet Vehicle',
-            vehicleColor: ord.vehicle_color || 'Black',
-            ownerName: ord.customer_name || ord.user_name || 'Customer',
-            phone: ord.customer_phone || ord.phone || 'N/A',
-            parkingSite: ord.parking_site || ord.location || 'Valet Lot',
-            keySlot: ord.key_slot || `Key Box #${ord.id || '01'}`,
-            status: (ord.status === 'returned' || ord.status === 'completed') ? 'returned' : 'parked',
-            requestedAt: ord.requested_at ? new Date(ord.requested_at).toLocaleString() : 'Recent',
-            entryTime: ord.parked_at ? new Date(ord.parked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '11:29 PM',
-            exitTime: ord.returned_at ? new Date(ord.returned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
-            duration: '1h 45m',
-        }))
-        : MOCK_TICKETS;
+    // Format raw order data & card tickets
+    const mappedOrders: TicketItem[] = storeOrders.map((ord: any) => ({
+        id: String(ord.id || ord.order_id || Math.random()),
+        ticketId: ord.ticket_number || ord.order_id || `VP-${ord.id || ''}`,
+        vehicleNumber: ord.vehicle_number || 'N/A',
+        vehicleModel: ord.vehicle_model || ord.vehicle_name || 'Vehicle',
+        vehicleColor: ord.vehicle_color || 'N/A',
+        ownerName: ord.customer_name || ord.user_name || 'Customer',
+        phone: ord.customer_phone || ord.phone || 'N/A',
+        parkingSite: ord.site?.name || ord.valet_site?.name || ord.parking_site || ord.location || 'Valet Site',
+        keySlot: ord.key_slot || (ord.valet_slot ? `Slot #${ord.valet_slot}` : `Key #${ord.id || '01'}`),
+        status: (ord.status === 'returned' || ord.status === 'completed') ? 'returned' : 'parked',
+        requestedAt: ord.requested_at ? new Date(ord.requested_at).toLocaleString() : 'Recent',
+        entryTime: ord.parked_at ? new Date(ord.parked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (ord.created_at ? new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'),
+        exitTime: ord.returned_at ? new Date(ord.returned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+        duration: 'N/A',
+    }));
+
+    const mappedCardTickets: TicketItem[] = cardTickets.map((t: any) => ({
+        id: String(t.id || t.ticket_no || Math.random()),
+        ticketId: t.ticket_no || t.ticket_number || t.ticket_id || `VP-${t.id || ''}`,
+        vehicleNumber: t.car_no || t.vehicle_number || 'N/A',
+        vehicleModel: t.vehicle_type || [t.brand, t.model].filter(Boolean).join(' ') || 'Vehicle',
+        vehicleColor: t.color || 'N/A',
+        ownerName: t.name || t.customer_name || t.owner_name || 'Customer',
+        phone: t.mobile_no || t.phone_no || t.phone || 'N/A',
+        parkingSite: t.parking_site || t.site?.name || 'Valet Site',
+        keySlot: t.key_slot || `Key Box #${t.id ? String(t.id).slice(-4) : 'A-1'}`,
+        status: t.status === 'returned' ? 'returned' : 'parked',
+        requestedAt: t.created_at ? new Date(t.created_at).toLocaleString() : 'Recent',
+        entryTime: t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A',
+        exitTime: t.exit_time ? new Date(t.exit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+        duration: 'N/A',
+    }));
+
+    const ticketsList: TicketItem[] = [...mappedCardTickets, ...mappedOrders];
 
     // Filter tickets based on search query and status filter
     const filteredTickets = ticketsList.filter((item) => {
@@ -138,7 +115,7 @@ export default function RecentTicketsScreen() {
 
     const headerPaddingTop = Math.max(insets.top, 20) + 12;
 
-    const renderTicketCard = ({ item }: { item: typeof MOCK_TICKETS[0] }) => {
+    const renderTicketCard = ({ item }: { item: TicketItem }) => {
         const isReturned = item.status === 'returned';
 
         return (
@@ -305,7 +282,6 @@ export default function RecentTicketsScreen() {
                 />
             )}
 
-            {/* Bottom Navigation Tab Bar */}
             <BottomTabBar />
         </View>
     );
@@ -380,7 +356,7 @@ const styles = StyleSheet.create({
     listContent: {
         paddingHorizontal: 16,
         paddingTop: 8,
-        paddingBottom: 110, // Padding above bottom tab bar
+        paddingBottom: 110,
     },
     ticketCard: {
         backgroundColor: '#fff',
