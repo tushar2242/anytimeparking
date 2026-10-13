@@ -19,13 +19,12 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import useThemeStore from '@/src/features/theme/theme.service';
 import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
-import Api from '@/src/Api/api';
+import Api, { baseURL } from '@/src/Api/api';
+import * as WebBrowser from 'expo-web-browser';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
 import TopStepper from '@/components/card-parking/TopStepper';
 import HeaderNavbar from '@/components/card-parking/HeaderNavbar';
-import CheckInFormStep from '@/components/card-parking/CheckInFormStep';
-import ReturnTicketDetailsStep from '@/components/card-parking/ReturnTicketDetailsStep';
-import { FormState, CameraState, WorkflowState, TicketData } from '@/components/card-parking/CardParkingTypes';
+import { TicketData } from '@/components/card-parking/CardParkingTypes';
 import { exportImageToPdf } from '@/src/utils/pdf';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -56,6 +55,7 @@ const BRANDS = [
     'Porsche',
     'Lexus',
     'Cadillac',
+    'Other'
 ];
 
 
@@ -89,15 +89,7 @@ export default function ValetAttendantWorkflowScreen() {
     // ==========================================
     // Check-In Form State
     // ==========================================
-    const [selectedSite, setSelectedSite] = useState<ValetSite | null>({
-        id: 'site-1',
-        name: 'Beverly Hills Grand Valet',
-        badge: 'Active',
-        description: 'Main Plaza, Valet Deck A',
-        attendants: 12,
-        slots: 45,
-        code: 'BH',
-    });
+    const [selectedSite, setSelectedSite] = useState<ValetSite | null>(null);
 
     // 4 capture photo slots
     const [photoFront, setPhotoFront] = useState<string | null>(null);
@@ -108,13 +100,14 @@ export default function ValetAttendantWorkflowScreen() {
 
     const [photoUri, setPhotoUri] = useState<string | null>(null);
     const [licensePlate, setLicensePlate] = useState('');
-    const [brand, setBrand] = useState('Mercedes-Benz');
+    const [brand, setBrand] = useState('');
     const [model, setModel] = useState('');
     const [color, setColor] = useState('');
     const [phone, setPhone] = useState('');
     const [driverName, setDriverName] = useState('');
     const [ticketNumber, setTicketNumber] = useState('');
     const [parkingTime, setParkingTime] = useState('');
+    const [webTicketUrl, setWebTicketUrl] = useState('');
 
     // UI States for Check-in
     const [showBrandDropdown, setShowBrandDropdown] = useState(false);
@@ -129,6 +122,9 @@ export default function ValetAttendantWorkflowScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [flashlightOn, setFlashlightOn] = useState(false);
     const [searching, setSearching] = useState(false);
+    const [scanned, setScanned] = useState(false);
+    const [recentTickets, setRecentTickets] = useState<TicketData[]>([]);
+    const [loadingRecent, setLoadingRecent] = useState(false);
     const [returnNotes, setReturnNotes] = useState('');
     const [exitTime, setExitTime] = useState('');
 
@@ -293,26 +289,16 @@ export default function ValetAttendantWorkflowScreen() {
                 const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
                 if (photo && photo.uri) {
                     setPhotoUri(photo.uri);
-                } else {
-                    setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
                 }
             } catch (err) {
-                setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
+                console.log('Capture error:', err);
             }
-        } else {
-            setPhotoUri('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?q=80&w=600');
         }
 
         setTimeout(() => {
             setOcrScanning(false);
-            setLicensePlate('7XYZ123');
-            setBrand('Mercedes-Benz');
-            setModel('E-Class');
-            setColor('Black');
-            setPhone('3105550199');
-            setDriverName('Michael Scott');
-            Alert.alert('OCR Complete', 'Vehicle details & photo successfully captured.');
-        }, 1000);
+            Alert.alert('Photo Captured', 'Vehicle photo captured. Please enter vehicle details.');
+        }, 600);
     };
 
     const handleConfirmDetails = async () => {
@@ -358,9 +344,13 @@ export default function ValetAttendantWorkflowScreen() {
                     } as any);
                 }
 
-                await Api.post('/card-parking', formData, {
+                const res = await Api.post('/card-parking', formData, {
                     formData: true,
                 });
+                const resData = res?.data || res;
+                if (resData?.ticket_url || resData?.url || resData?.web_url) {
+                    setWebTicketUrl(resData.ticket_url || resData.url || resData.web_url);
+                }
             } catch (apiErr) {
                 console.log('API ticket creation record notice:', apiErr);
             }
@@ -379,6 +369,10 @@ export default function ValetAttendantWorkflowScreen() {
     // ==========================================
     // Key Return Actions
     // ==========================================
+    const simulateQRScan = () => {
+        Alert.alert('Scan QR', 'Please align the customer ticket QR code inside the camera viewfinder.');
+    };
+
     const processScannedTicketData = async (scannedData: string) => {
         setSearching(true);
         try {
@@ -443,11 +437,19 @@ export default function ValetAttendantWorkflowScreen() {
                 });
                 setReturnStep(3);
             } else {
-                Alert.alert('Ticket Not Found', `No active parking ticket was found matching "${query}".`);
+                Alert.alert(
+                    'Ticket Not Found',
+                    `No active parking ticket was found matching "${query}".`,
+                    [{ text: 'OK', onPress: () => setScanned(false) }]
+                );
             }
         } catch (err) {
             console.error('Error processing scanned ticket:', err);
-            Alert.alert('Error', 'Unable to retrieve ticket details. Please verify the code.');
+            Alert.alert(
+                'Error',
+                'Unable to retrieve ticket details. Please verify the code.',
+                [{ text: 'OK', onPress: () => setScanned(false) }]
+            );
         } finally {
             setSearching(false);
         }
@@ -529,6 +531,35 @@ export default function ValetAttendantWorkflowScreen() {
         }
     };
 
+    const loadRecentTickets = async () => {
+        setLoadingRecent(true);
+        try {
+            const res = await Api.get('/card-parking');
+            const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
+            const formatted: TicketData[] = list.map((item: any) => ({
+                ticketId: item.ticket_no || item.ticket_id || item.id || '',
+                vehicleNumber: item.car_no || item.vehicle_number || '',
+                vehicleType: item.vehicle_type || [item.brand, item.model].filter(Boolean).join(' ') || 'Vehicle',
+                ownerName: item.name || item.customer_name || 'Customer',
+                entryTime: item.created_at ? new Date(item.created_at).toLocaleString() : '',
+                parkingSite: item.parking_site || '',
+                phone: item.phone || item.mobile_no || '',
+                photo: item.photo || null,
+            }));
+            setRecentTickets(formatted);
+        } catch (e) {
+            setRecentTickets([]);
+        } finally {
+            setLoadingRecent(false);
+        }
+    };
+
+    useEffect(() => {
+        if (workflowMode === 'keyreturn') {
+            loadRecentTickets();
+        }
+    }, [workflowMode, searchTab]);
+
     const selectRecentTicket = (ticket: TicketData) => {
         setFoundTicket(ticket);
         setReturnStep(3);
@@ -582,6 +613,53 @@ export default function ValetAttendantWorkflowScreen() {
         );
     };
 
+    const getTicketWebUrl = (tNo: string): string => {
+        if (!tNo) return '';
+        if (webTicketUrl) return webTicketUrl;
+        if (baseURL && baseURL.startsWith('http')) {
+            const cleanBase = baseURL.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+            const webBase = cleanBase.includes('valet-api.')
+                ? cleanBase.replace('valet-api.', 'valet.')
+                : cleanBase;
+            return `${webBase}/ticket/${encodeURIComponent(tNo)}`;
+        }
+        return `https://valet.botsupport.in/ticket/${encodeURIComponent(tNo)}`;
+    };
+
+    const openTicketWebsite = async () => {
+        const url = getTicketWebUrl(ticketNumber);
+        if (!url) return;
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                await WebBrowser.openBrowserAsync(url);
+            }
+        } catch (e) {
+            console.log('Error opening web link via Linking, trying WebBrowser:', e);
+            try {
+                await WebBrowser.openBrowserAsync(url);
+            } catch (err) {
+                Alert.alert('Website Link', url);
+            }
+        }
+    };
+
+    const shareTicketLink = async () => {
+        const url = getTicketWebUrl(ticketNumber);
+        if (!url) return;
+        try {
+            await Share.share({
+                title: `Valet Ticket #${ticketNumber}`,
+                message: `View digital valet parking ticket #${ticketNumber} online: ${url}`,
+                url: url,
+            });
+        } catch (e) {
+            console.log('Error sharing ticket link:', e);
+        }
+    };
+
     // Shared actions
     const sendWhatsApp = async () => {
         const isCheckin = workflowMode === 'checkin';
@@ -594,14 +672,16 @@ export default function ValetAttendantWorkflowScreen() {
         const vehicleDesc = isCheckin ? `${brand} ${model} • ${color}` : `${foundTicket.vehicleType || 'BMW X5'} • Black`;
 
         let message = '';
+        const ticketWebLink = getTicketWebUrl(currentTicket);
         if (isCheckin) {
             message = `🎉 *Your vehicle has been parked successfully!*\n\n` +
                 `*Ticket No.*              ${currentTicket}\n` +
                 `*Vehicle*                 ${vehicleDesc}\n` +
                 `*Number Plate*            ${(vehiclePlate || '').toUpperCase()}\n` +
-                `*Parking Location*        ${siteName || 'B2 - 45'}\n` +
-                `*Parking Time*            ${parkingTime || '11:05 AM, 18 May 2025'}\n` +
-                `*Attended By*             John Driver\n\n` +
+                `*Parking Location*        ${siteName || 'Valet Parking Site'}\n` +
+                `*Parking Time*            ${parkingTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}\n\n` +
+                `🌐 *View Digital Ticket on Website:*\n` +
+                `${ticketWebLink}\n\n` +
                 `📍 *View Location on Map:*\n` +
                 `https://maps.google.com/?q=28.6139,77.2090\n\n` +
                 `*Quick Actions:*\n` +
@@ -733,6 +813,7 @@ export default function ValetAttendantWorkflowScreen() {
         setPhone('');
         setDriverName('');
         setTicketNumber('');
+        setWebTicketUrl('');
         setSearchQuery('');
         setReturnNotes('');
         if (workflowMode === 'checkin') {
@@ -926,8 +1007,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. 7XYZ123"
-                                                    placeholderTextColor="#8E8E93"
+                                                    placeholder=""
                                                     value={licensePlate}
                                                     onChangeText={setLicensePlate}
                                                     autoCapitalize="characters"
@@ -953,8 +1033,7 @@ export default function ValetAttendantWorkflowScreen() {
                                                 <Feather name="user" size={18} color="#8E8E93" style={{ marginRight: 8 }} />
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. Rajesh Kumar"
-                                                    placeholderTextColor="#8E8E93"
+                                                    placeholder=""
                                                     value={driverName}
                                                     onChangeText={setDriverName}
                                                 />
@@ -968,8 +1047,7 @@ export default function ValetAttendantWorkflowScreen() {
                                                 <Feather name="phone" size={18} color="#8E8E93" style={{ marginRight: 8 }} />
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. 9876543210"
-                                                    placeholderTextColor="#8E8E93"
+                                                    placeholder=""
                                                     keyboardType="phone-pad"
                                                     value={phone}
                                                     onChangeText={setPhone}
@@ -991,7 +1069,7 @@ export default function ValetAttendantWorkflowScreen() {
                                                 <View style={styles.brandDisplayRow}>
                                                     <MaterialCommunityIcons name="car-select" size={20} color="#8E8E93" style={{ marginRight: 8 }} />
                                                     <Text style={[styles.formInputTextValue, isDarkMode && { color: '#fff' }]}>
-                                                        {brand || 'Select Brand'}
+                                                        {brand || ''}
                                                     </Text>
                                                 </View>
                                                 <Ionicons name={showBrandDropdown ? "chevron-up" : "chevron-down"} size={20} color="#8E8E93" />
@@ -1021,8 +1099,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. E-Class"
-                                                    placeholderTextColor="#8E8E93"
+                                                    placeholder=""
                                                     value={model}
                                                     onChangeText={setModel}
                                                 />
@@ -1035,8 +1112,7 @@ export default function ValetAttendantWorkflowScreen() {
                                             <View style={[styles.formInputWrapper, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                                 <TextInput
                                                     style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                    placeholder="e.g. Black"
-                                                    placeholderTextColor="#8E8E93"
+                                                    placeholder=""
                                                     value={color}
                                                     onChangeText={setColor}
                                                 />
@@ -1122,6 +1198,42 @@ export default function ValetAttendantWorkflowScreen() {
                                             <Text style={styles.scanConfirmMessage}>Scan to verify vehicle details</Text>
                                         </View>
 
+                                        {/* Website Ticket Link Option */}
+                                        <View style={[styles.webLinkCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                                            <View style={styles.webLinkHeader}>
+                                                <View style={[styles.webIconCircle, { backgroundColor: isDarkMode ? '#1E2A3A' : '#EAF2FF' }]}>
+                                                    <Ionicons name="globe-outline" size={20} color="#0066FF" />
+                                                </View>
+                                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                                    <Text style={[styles.webLinkTitle, isDarkMode && { color: '#fff' }]}>
+                                                        Customer Ticket Portal
+                                                    </Text>
+                                                    <Text style={[styles.webLinkSubtitle, isDarkMode && { color: '#64D2FF' }]} numberOfLines={1}>
+                                                        {getTicketWebUrl(ticketNumber)}
+                                                    </Text>
+                                                </View>
+                                            </View>
+
+                                            <View style={styles.webLinkButtonsRow}>
+                                                <TouchableOpacity
+                                                    style={styles.openWebButton}
+                                                    onPress={openTicketWebsite}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    <Ionicons name="open-outline" size={17} color="#fff" style={{ marginRight: 6 }} />
+                                                    <Text style={styles.openWebButtonText}>VIEW TICKET ON WEBSITE</Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    style={[styles.shareWebButton, isDarkMode && { backgroundColor: '#2C2C2E', borderColor: '#3A3A3C' }]}
+                                                    onPress={shareTicketLink}
+                                                    activeOpacity={0.8}
+                                                >
+                                                    <Ionicons name="share-social-outline" size={18} color={isDarkMode ? '#fff' : '#0066FF'} />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
                                         <TouchableOpacity style={styles.whatsappButton} onPress={sendWhatsApp}>
                                             <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
                                             <Text style={styles.whatsappButtonText}>SEND ON WHATSAPP</Text>
@@ -1149,11 +1261,13 @@ export default function ValetAttendantWorkflowScreen() {
                                         <CameraView
                                             ref={cameraRef}
                                             style={StyleSheet.absoluteFillObject}
+                                            facing="back"
                                             barcodeScannerSettings={{
                                                 barcodeTypes: ['qr'],
                                             }}
-                                            onBarcodeScanned={({ data }) => {
-                                                if (data) {
+                                            onBarcodeScanned={scanned ? undefined : ({ data }) => {
+                                                if (data && !scanned) {
+                                                    setScanned(true);
                                                     processScannedTicketData(data);
                                                 }
                                             }}
@@ -1188,7 +1302,13 @@ export default function ValetAttendantWorkflowScreen() {
                                         </TouchableOpacity>
 
                                         {/* Search Manually Trigger Link */}
-                                        <TouchableOpacity style={styles.manualSearchTrigger} onPress={() => setReturnStep(2)}>
+                                        <TouchableOpacity
+                                            style={styles.manualSearchTrigger}
+                                            onPress={() => {
+                                                setSearchTab('manual');
+                                                setReturnStep(2);
+                                            }}
+                                        >
                                             <Text style={[styles.manualSearchTriggerText, { color: themeColor }]}>{"Can't scan? Search manually"}</Text>
                                         </TouchableOpacity>
                                     </View>
@@ -1222,7 +1342,11 @@ export default function ValetAttendantWorkflowScreen() {
                                         </TouchableOpacity>
                                         <TouchableOpacity
                                             style={[styles.tabHeaderItem, searchTab === 'scan' && { borderBottomColor: themeColor, borderBottomWidth: 3 }]}
-                                            onPress={() => {
+                                            onPress={async () => {
+                                                if (!permission?.granted) {
+                                                    await requestPermission();
+                                                }
+                                                setScanned(false);
                                                 setSearchTab('scan');
                                                 setReturnStep(1);
                                             }}
@@ -1244,8 +1368,7 @@ export default function ValetAttendantWorkflowScreen() {
 
                                                     <TextInput
                                                         style={[styles.formInputText, isDarkMode && { color: '#fff' }]}
-                                                        placeholder="Enter Mobile No, Car No, or Ticket ID"
-                                                        placeholderTextColor="#8E8E93"
+                                                        placeholder=""
                                                         value={searchQuery}
                                                         onChangeText={setSearchQuery}
                                                         autoCapitalize="characters"
@@ -1253,7 +1376,14 @@ export default function ValetAttendantWorkflowScreen() {
 
                                                     <TouchableOpacity
                                                         style={[styles.qrScanInlineBtn, { backgroundColor: themeColorLight }]}
-                                                        onPress={() => setReturnStep(1)}
+                                                        onPress={async () => {
+                                                            if (!permission?.granted) {
+                                                                await requestPermission();
+                                                            }
+                                                            setScanned(false);
+                                                            setSearchTab('scan');
+                                                            setReturnStep(1);
+                                                        }}
                                                         activeOpacity={0.75}
                                                     >
                                                         <Ionicons name="qr-code" size={16} color={themeColor} />
@@ -1262,34 +1392,8 @@ export default function ValetAttendantWorkflowScreen() {
                                                 </View>
                                             </View>
 
-                                            <View style={styles.orDividerRow}>
-                                                <View style={styles.dividerLine} />
-                                                <Text style={styles.dividerText}>OR QUICK DEMO</Text>
-                                                <View style={styles.dividerLine} />
-                                            </View>
-
                                             <TouchableOpacity
-                                                style={[styles.quickSearchBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                                                onPress={() => {
-                                                    setSearchQuery('RJ20CD1234');
-                                                }}
-                                            >
-                                                <Ionicons name="car-sport" size={18} color={themeColor} style={{ marginRight: 8 }} />
-                                                <Text style={[styles.quickSearchText, isDarkMode && { color: '#fff' }]}>Use Demo Car (RJ20CD1234)</Text>
-                                            </TouchableOpacity>
-
-                                            <TouchableOpacity
-                                                style={[styles.quickSearchBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                                                onPress={() => {
-                                                    setSearchQuery('WP1234567890');
-                                                }}
-                                            >
-                                                <Ionicons name="ticket" size={18} color={themeColor} style={{ marginRight: 8 }} />
-                                                <Text style={[styles.quickSearchText, isDarkMode && { color: '#fff' }]}>Use Demo Ticket (WP1234567890)</Text>
-                                            </TouchableOpacity>
-
-                                            <TouchableOpacity
-                                                style={[styles.continueButton, { backgroundColor: themeColor }, searching && { opacity: 0.8 }]}
+                                                style={[styles.continueButton, { backgroundColor: themeColor, marginTop: 16 }, searching && { opacity: 0.8 }]}
                                                 onPress={handleSearchSubmit}
                                                 disabled={searching}
                                             >
@@ -1304,53 +1408,34 @@ export default function ValetAttendantWorkflowScreen() {
                                         // Recent Tickets Tab list
                                         <ScrollView contentContainerStyle={styles.siteListContainer} showsVerticalScrollIndicator={false}>
                                             <Text style={styles.recentTitleLabel}>Recently Parked Vehicles</Text>
-                                            {[
-                                                {
-                                                    ticketId: 'WP8732649012',
-                                                    vehicleNumber: 'MH12PQ3456',
-                                                    vehicleType: 'SUV',
-                                                    ownerName: 'Amit Verma',
-                                                    entryTime: '18 Aug 2026, 02:15 PM',
-                                                    parkingSite: 'City Mall',
-                                                    phone: '9822334455',
-                                                },
-                                                {
-                                                    ticketId: 'WP9012348765',
-                                                    vehicleNumber: 'DL03AY8721',
-                                                    vehicleType: 'Car',
-                                                    ownerName: 'Sneha Rao',
-                                                    entryTime: '18 Aug 2026, 11:45 AM',
-                                                    parkingSite: 'Hotel Grand',
-                                                    phone: '9988776655',
-                                                },
-                                                {
-                                                    ticketId: 'WP2394871029',
-                                                    vehicleNumber: 'KA05MR4321',
-                                                    vehicleType: 'Hatchback',
-                                                    ownerName: 'Vikram Singh',
-                                                    entryTime: '18 Aug 2026, 09:10 AM',
-                                                    parkingSite: 'Hospital Zone',
-                                                    phone: '9766554433',
-                                                }
-                                            ].map((ticket) => (
-                                                <TouchableOpacity
-                                                    key={ticket.ticketId}
-                                                    style={[styles.siteCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                                                    onPress={() => selectRecentTicket(ticket)}
-                                                >
-                                                    <View style={styles.siteCardRow}>
-                                                        <View style={[styles.successIconWrapper, { backgroundColor: themeColorLight, marginRight: 12 }]}>
-                                                            <Ionicons name="car-sport" size={20} color={themeColor} />
+                                            {loadingRecent ? (
+                                                <ActivityIndicator size="small" color={themeColor} style={{ marginTop: 24 }} />
+                                            ) : recentTickets.length === 0 ? (
+                                                <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                                                    <Ionicons name="receipt-outline" size={38} color="#8E8E93" style={{ marginBottom: 8 }} />
+                                                    <Text style={[styles.emptySubtitle, isDarkMode && { color: '#8E8E93' }]}>No recently parked vehicles found.</Text>
+                                                </View>
+                                            ) : (
+                                                recentTickets.map((ticket) => (
+                                                    <TouchableOpacity
+                                                        key={ticket.ticketId}
+                                                        style={[styles.siteCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
+                                                        onPress={() => selectRecentTicket(ticket)}
+                                                    >
+                                                        <View style={styles.siteCardRow}>
+                                                            <View style={[styles.successIconWrapper, { backgroundColor: themeColorLight, marginRight: 12 }]}>
+                                                                <Ionicons name="car-sport" size={20} color={themeColor} />
+                                                            </View>
+                                                            <View style={{ flex: 1 }}>
+                                                                <Text style={[styles.siteName, isDarkMode && { color: '#fff' }]}>{ticket.vehicleNumber}</Text>
+                                                                <Text style={styles.siteDesc}>Ticket: {ticket.ticketId}  |  Owner: {ticket.ownerName}</Text>
+                                                                <Text style={styles.siteStats}>Parked at {ticket.parkingSite} ({ticket.entryTime})</Text>
+                                                            </View>
+                                                            <Ionicons name="chevron-forward" size={18} color="#8E8E93" />
                                                         </View>
-                                                        <View style={{ flex: 1 }}>
-                                                            <Text style={[styles.siteName, isDarkMode && { color: '#fff' }]}>{ticket.vehicleNumber}</Text>
-                                                            <Text style={styles.siteDesc}>Ticket: {ticket.ticketId}  |  Owner: {ticket.ownerName}</Text>
-                                                            <Text style={styles.siteStats}>Parked at {ticket.parkingSite} ({ticket.entryTime})</Text>
-                                                        </View>
-                                                        <Ionicons name="chevron-forward" size={18} color="#8E8E93" />
-                                                    </View>
-                                                </TouchableOpacity>
-                                            ))}
+                                                    </TouchableOpacity>
+                                                ))
+                                            )}
                                         </ScrollView>
                                     )}
                                 </View>
@@ -1369,12 +1454,19 @@ export default function ValetAttendantWorkflowScreen() {
                                             />
                                             <View style={styles.vehicleBannerBadge}>
                                                 <Ionicons name="car-sport" size={14} color="#fff" style={{ marginRight: 4 }} />
-                                                <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || '7XYZ123'}</Text>
+                                                <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || ''}</Text>
                                             </View>
                                         </View>
 
                                         <Text style={[styles.timerTitle, isDarkMode && { color: '#fff' }]}>Vehicle Return Request</Text>
                                         <Text style={styles.timerSubtitle}>Customer {foundTicket.ownerName} requested vehicle return</Text>
+
+                                        <View style={[styles.acceptVerifyBadge, { backgroundColor: isDarkMode ? '#1E2A3A' : '#EAF2FF' }]}>
+                                            <Ionicons name="shield-checkmark" size={16} color="#0066FF" style={{ marginRight: 6 }} />
+                                            <Text style={[styles.acceptVerifyBadgeText, isDarkMode && { color: '#64D2FF' }]}>
+                                                Review vehicle details and tap Accept & Verify to return
+                                            </Text>
+                                        </View>
 
                                         <View style={[styles.ticketCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                             <View style={styles.ticketDetailRow}>
@@ -1419,8 +1511,8 @@ export default function ValetAttendantWorkflowScreen() {
                                                 onPress={handleConfirmReturn}
                                                 activeOpacity={0.8}
                                             >
-                                                <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 6 }} />
-                                                <Text style={styles.returnVehicleBtnText}>RETURN VEHICLE</Text>
+                                                <Ionicons name="checkmark-done-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                <Text style={styles.returnVehicleBtnText}>ACCEPT & VERIFY</Text>
                                             </TouchableOpacity>
 
                                             <TouchableOpacity
@@ -2783,5 +2875,96 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#FA541C',
         fontWeight: '700',
+    },
+    emptySubtitle: {
+        fontSize: 13,
+        color: '#8E8E93',
+        textAlign: 'center',
+    },
+    webLinkCard: {
+        backgroundColor: '#fff',
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#E5E9F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
+    },
+    webLinkHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    webIconCircle: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    webLinkTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#1C1C1E',
+    },
+    webLinkSubtitle: {
+        fontSize: 12,
+        color: '#0066FF',
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    webLinkButtonsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    openWebButton: {
+        flex: 1,
+        height: 44,
+        borderRadius: 10,
+        backgroundColor: '#0066FF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#0066FF',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    openWebButtonText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.3,
+    },
+    shareWebButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        backgroundColor: '#F5F7FB',
+        borderWidth: 1,
+        borderColor: '#E5E9F0',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    acceptVerifyBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        marginBottom: 12,
+        alignSelf: 'center',
+    },
+    acceptVerifyBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#0066FF',
     },
 });

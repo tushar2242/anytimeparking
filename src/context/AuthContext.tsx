@@ -90,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Login error:', error)
             const msg = typeof error === 'string' ? error : error?.response?.data?.message || error?.message || 'Login failed. Please try again.'
             showToast(msg, 3500, 'error')
+            throw error;
         }
     }
 

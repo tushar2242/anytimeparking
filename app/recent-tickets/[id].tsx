@@ -9,14 +9,17 @@ import {
     Alert,
     Linking,
     ActivityIndicator,
+    Share,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useThemeStore from '@/src/features/theme/theme.service';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
+import * as WebBrowser from 'expo-web-browser';
 
-import Api from '@/src/Api/api';
+import Api, { baseURL } from '@/src/Api/api';
 
 export default function TicketDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -101,6 +104,48 @@ export default function TicketDetailsScreen() {
 
     const headerPaddingTop = Math.max(insets.top, 20) + 12;
 
+    const ticketWebUrl = (() => {
+        const tNo = ticketData.ticketId;
+        if (baseURL && baseURL.startsWith('http')) {
+            const cleanBase = baseURL.replace(/\/api\/?$/, '').replace(/\/+$/, '');
+            const webBase = cleanBase.includes('valet-api.')
+                ? cleanBase.replace('valet-api.', 'valet.')
+                : cleanBase;
+            return `${webBase}/ticket/${encodeURIComponent(tNo)}`;
+        }
+        return `https://valet.botsupport.in/ticket/${encodeURIComponent(tNo)}`;
+    })();
+
+    const openTicketWebsite = async () => {
+        try {
+            const canOpen = await Linking.canOpenURL(ticketWebUrl);
+            if (canOpen) {
+                await Linking.openURL(ticketWebUrl);
+            } else {
+                await WebBrowser.openBrowserAsync(ticketWebUrl);
+            }
+        } catch (e) {
+            console.log('Error opening web link:', e);
+            try {
+                await WebBrowser.openBrowserAsync(ticketWebUrl);
+            } catch (err) {
+                Alert.alert('Website Link', ticketWebUrl);
+            }
+        }
+    };
+
+    const shareTicketLink = async () => {
+        try {
+            await Share.share({
+                title: `Valet Ticket #${ticketData.ticketId}`,
+                message: `View digital valet parking ticket #${ticketData.ticketId} online: ${ticketWebUrl}`,
+                url: ticketWebUrl,
+            });
+        } catch (e) {
+            console.log('Error sharing ticket link:', e);
+        }
+    };
+
     const handleShareWhatsApp = () => {
         const text = `🚗 *Valet Parking Ticket Details*\n\n` +
             `*Ticket ID:* ${ticketData.ticketId}\n` +
@@ -108,7 +153,8 @@ export default function TicketDetailsScreen() {
             `*Customer:* ${ticketData.ownerName}\n` +
             `*Key Slot:* ${ticketData.keySlotLocation}\n` +
             `*Entry Time:* ${ticketData.entryTime}\n` +
-            `*Location:* ${ticketData.parkingSite}`;
+            `*Location:* ${ticketData.parkingSite}\n\n` +
+            `🌐 *View Digital Ticket on Website:*\n${ticketWebUrl}`;
 
         const url = `whatsapp://send?text=${encodeURIComponent(text)}`;
         Linking.canOpenURL(url)
@@ -133,7 +179,8 @@ export default function TicketDetailsScreen() {
 
     if (!liveTicket) {
         return (
-            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+            <LayoutWrapper>
+                <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
                 <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
                 <View style={[styles.topNavbar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -155,11 +202,13 @@ export default function TicketDetailsScreen() {
                 </View>
                 <BottomTabBar />
             </View>
-        );
+        </LayoutWrapper>
+    );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+        <LayoutWrapper>
+            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
             {/* Top Navbar */}
@@ -279,6 +328,37 @@ export default function TicketDetailsScreen() {
                     </View>
                 </View>
 
+                {/* Section 3: Customer Web Portal */}
+                <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                    <View style={styles.sectionHeaderRow}>
+                        <Ionicons name="globe-outline" size={20} color="#0066FF" style={{ marginRight: 8 }} />
+                        <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Customer Ticket Portal</Text>
+                    </View>
+
+                    <Text style={[styles.webUrlLabel, isDarkMode && { color: '#64D2FF' }]} numberOfLines={1}>
+                        {ticketWebUrl}
+                    </Text>
+
+                    <View style={styles.webBtnRow}>
+                        <TouchableOpacity
+                            style={styles.openWebBtn}
+                            onPress={openTicketWebsite}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="open-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                            <Text style={styles.openWebBtnText}>VIEW TICKET ON WEBSITE</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.shareWebBtn, isDarkMode && { backgroundColor: '#2C2C2E', borderColor: '#3A3A3C' }]}
+                            onPress={shareTicketLink}
+                            activeOpacity={0.8}
+                        >
+                            <Ionicons name="share-social-outline" size={17} color={isDarkMode ? '#fff' : '#0066FF'} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
                 {/* Action Buttons Row */}
                 <View style={styles.actionButtonsRow}>
                     <TouchableOpacity
@@ -304,6 +384,7 @@ export default function TicketDetailsScreen() {
             {/* Bottom Navigation Tab Bar */}
             <BottomTabBar />
         </View>
+        </LayoutWrapper>
     );
 }
 
@@ -486,5 +567,70 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '700',
         letterSpacing: 0.5,
+    },
+    centerContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 30,
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#8E8E93',
+    },
+    emptyTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1C1C1E',
+        marginBottom: 8,
+    },
+    emptySubText: {
+        fontSize: 14,
+        color: '#8E8E93',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    webUrlLabel: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#0066FF',
+        marginBottom: 12,
+    },
+    webBtnRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    openWebBtn: {
+        flex: 1,
+        height: 44,
+        borderRadius: 10,
+        backgroundColor: '#0066FF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#0066FF',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    openWebBtnText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 0.3,
+    },
+    shareWebBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        backgroundColor: '#F5F7FB',
+        borderWidth: 1,
+        borderColor: '#E5E9F0',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

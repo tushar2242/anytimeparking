@@ -23,6 +23,7 @@ import * as Location from 'expo-location';
 import { useEffect, useState, useRef } from 'react';
 import { Polyline } from 'react-native-maps';
 import useThemeStore from '@/src/features/theme/theme.service';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 
 const { width } = Dimensions.get('window')
 
@@ -271,7 +272,8 @@ export default function HotelDetailPage() {
     }
 
     return (
-        <View style={[styles.page, isDarkMode && { backgroundColor: '#121212' }]}>
+        <LayoutWrapper>
+            <View style={[styles.page, isDarkMode && { backgroundColor: '#121212' }]}>
             <ScrollView
                 style={isDarkMode && { backgroundColor: '#121212' }}
                 contentContainerStyle={styles.scrollContent}
@@ -417,6 +419,7 @@ export default function HotelDetailPage() {
                 )}
             </View>
         </View>
+        </LayoutWrapper>
     )
 }
 

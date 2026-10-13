@@ -74,9 +74,9 @@ export default function DriverHome() {
 
     useEffect(() => {
         // Fetch fresh driver orders and user profile on mount
-        valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']);
-        authStore.actions.me().catch(() => {});
-        (async () => {
+        const loadHomeData = async () => {
+            valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']);
+            authStore.actions.me().catch(() => { });
             try {
                 const res = await Api.get('/card-parking');
                 const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
@@ -84,7 +84,13 @@ export default function DriverHome() {
             } catch (e) {
                 console.log('Error loading card parkings in home:', e);
             }
-        })();
+        };
+
+        loadHomeData();
+
+        // Real-time synchronization interval
+        const syncInterval = setInterval(loadHomeData, 6000);
+        return () => clearInterval(syncInterval);
     }, []);
 
     // Calculate real dynamic stats directly from user orders and card tickets
@@ -144,7 +150,7 @@ export default function DriverHome() {
                     >
                         <Feather name="search" size={20} color={isDarkMode ? '#FFFFFF' : '#1C1C1E'} />
                     </TouchableOpacity>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         activeOpacity={0.8}
                         style={[styles.circleButton, {
                             backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
@@ -153,7 +159,7 @@ export default function DriverHome() {
                     >
                         <Feather name="bell" size={20} color={isDarkMode ? '#FFFFFF' : '#1C1C1E'} />
                         <View style={styles.notificationDot} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </View>
 

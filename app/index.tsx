@@ -2,13 +2,16 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import DriverHome from '@/components/home/DriverHome';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 
 const HomeComp = () => {
     return (
-        <View style={styles.container}>
-            <DriverHome />
-            <BottomTabBar />
-        </View>
+        <LayoutWrapper>
+            <View style={styles.container}>
+                <DriverHome />
+                <BottomTabBar />
+            </View>
+        </LayoutWrapper>
     );
 };
 

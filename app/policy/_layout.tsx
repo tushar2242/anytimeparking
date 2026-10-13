@@ -2,16 +2,18 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import useThemeStore from '@/src/features/theme/theme.service';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 
 export default function PolicyScreen() {
     const isDarkMode = useThemeStore().isDarkMode;
 
     return (
-        <ScrollView
-            style={[styles.container, isDarkMode && { backgroundColor: '#121212' }]}
-            contentContainerStyle={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-        >
+        <LayoutWrapper>
+            <ScrollView
+                style={[styles.container, isDarkMode && { backgroundColor: '#121212' }]}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+            >
             <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                 backgroundColor={isDarkMode ? '#1c1c1e' : '#fff'}
@@ -65,6 +67,7 @@ export default function PolicyScreen() {
                 </Text>
             </View>
         </ScrollView>
+        </LayoutWrapper>
     );
 }
 

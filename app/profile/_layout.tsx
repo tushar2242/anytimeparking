@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { baseURL } from '@/src/Api/api'
 import { LinearGradient } from 'expo-linear-gradient'
 import BottomTabBar from '@/components/navigation/BottomTabBar'
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper'
 
 const genderOptions = [
     { key: 'male', label: 'Male', icon: 'male' },
@@ -121,7 +122,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     ]}
                     value={value}
                     onChangeText={onChangeText}
-                    placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+                    placeholder={placeholder || ''}
                     placeholderTextColor={COLORS.textLight}
                     keyboardType={keyboardType}
                     onFocus={handleFocus}
@@ -343,10 +344,11 @@ export default function DriverProfileForm() {
     }
 
     return (
-        <KeyboardAvoidingView
-            style={styles.keyboardView}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <LayoutWrapper>
+            <KeyboardAvoidingView
+                style={styles.keyboardView}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
             <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryDark} />
 
             <ScrollView
@@ -409,7 +411,7 @@ export default function DriverProfileForm() {
                             value={form.name}
                             onChangeText={val => handleChange('name', val)}
                             icon="person-outline"
-                            placeholder="Enter your full name"
+                            placeholder=""
                         />
 
                         <InputField
@@ -418,7 +420,7 @@ export default function DriverProfileForm() {
                             onChangeText={val => handleChange('email', val)}
                             keyboardType="email-address"
                             icon="mail-outline"
-                            placeholder="your@email.com"
+                            placeholder=""
                         />
 
                         <InputField
@@ -427,7 +429,7 @@ export default function DriverProfileForm() {
                             onChangeText={val => handleChange('phone', val)}
                             keyboardType="phone-pad"
                             icon="call-outline"
-                            placeholder="(555) 000-0000"
+                            placeholder=""
                         />
 
                         {/* Gender Selection */}
@@ -487,7 +489,7 @@ export default function DriverProfileForm() {
                             value={form.license_number}
                             onChangeText={val => handleChange('license_number', val)}
                             icon="document-text-outline"
-                            placeholder="DL-XXXX-XXXX-XXXX"
+                            placeholder=""
                         />
 
                         <DatePickerField
@@ -514,7 +516,7 @@ export default function DriverProfileForm() {
                             value={form.id_proof_type}
                             onChangeText={val => handleChange('id_proof_type', val)}
                             icon="id-card-outline"
-                            placeholder="Aadhar / PAN / Passport"
+                            placeholder=""
                         />
 
                         <InputField
@@ -522,7 +524,7 @@ export default function DriverProfileForm() {
                             value={form.id_proof_number}
                             onChangeText={val => handleChange('id_proof_number', val)}
                             icon="barcode-outline"
-                            placeholder="Enter ID number"
+                            placeholder=""
                         />
                     </Section>
 
@@ -533,7 +535,7 @@ export default function DriverProfileForm() {
                             value={form.address}
                             onChangeText={val => handleChange('address', val)}
                             icon="home-outline"
-                            placeholder="Enter street address"
+                            placeholder=""
                             multiline
                         />
 
@@ -543,7 +545,7 @@ export default function DriverProfileForm() {
                                     label="City"
                                     value={form.city}
                                     onChangeText={val => handleChange('city', val)}
-                                    placeholder="City"
+                                    placeholder=""
                                 />
                             </View>
                             <View style={styles.halfWidth}>
@@ -551,7 +553,7 @@ export default function DriverProfileForm() {
                                     label="State"
                                     value={form.state}
                                     onChangeText={val => handleChange('state', val)}
-                                    placeholder="State"
+                                    placeholder=""
                                 />
                             </View>
                         </View>
@@ -562,7 +564,7 @@ export default function DriverProfileForm() {
                                     label="Country"
                                     value={form.country}
                                     onChangeText={val => handleChange('country', val)}
-                                    placeholder="Country"
+                                    placeholder=""
                                 />
                             </View>
                             <View style={styles.halfWidth}>
@@ -571,7 +573,7 @@ export default function DriverProfileForm() {
                                     value={form.pincode}
                                     onChangeText={val => handleChange('pincode', val)}
                                     keyboardType="number-pad"
-                                    placeholder="XXXXXX"
+                                    placeholder=""
                                 />
                             </View>
                         </View>
@@ -606,8 +608,9 @@ export default function DriverProfileForm() {
                     <View style={styles.bottomSpacing} />
                 </Animated.View>
             </ScrollView>
-            <BottomTabBar />
-        </KeyboardAvoidingView>
+                <BottomTabBar />
+            </KeyboardAvoidingView>
+        </LayoutWrapper>
     )
 }
 

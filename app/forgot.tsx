@@ -94,7 +94,7 @@ export default function ForgotPasswordScreen() {
                         <Feather name="mail" size={18} color={isDarkMode ? '#777' : '#999'} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
-                            placeholder="Enter your email"
+                            placeholder=""
                             keyboardType="email-address"
                             autoCapitalize="none"
                             value={email}

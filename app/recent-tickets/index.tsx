@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useThemeStore from '@/src/features/theme/theme.service';
 import useValetStore from '@/src/features/valetOrder/order.service';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import Api from '@/src/Api/api';
 
 export interface TicketItem {
@@ -199,7 +200,8 @@ export default function RecentTicketsScreen() {
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+        <LayoutWrapper>
+            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
 
             {/* Top Navbar */}
@@ -216,7 +218,7 @@ export default function RecentTicketsScreen() {
                 <View style={[styles.searchBar, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                     <Feather name="search" size={18} color="#8E8E93" style={{ marginRight: 8 }} />
                     <TextInput
-                        placeholder="Search Ticket ID, Vehicle #, Name..."
+                        placeholder=""
                         placeholderTextColor="#8E8E93"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -284,6 +286,7 @@ export default function RecentTicketsScreen() {
 
             <BottomTabBar />
         </View>
+        </LayoutWrapper>
     );
 }
 

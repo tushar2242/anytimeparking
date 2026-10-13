@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import useAuthStore from '@/src/features/auth/auth.service';
 import useDriverStore from '@/src/features/user/user.service';
 import useThemeStore from '@/src/features/theme/theme.service';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import Api from '@/src/Api/api';
 import { showToast } from '@/src/utils/toast';
 
@@ -108,7 +109,8 @@ export default function WithdrawScreen() {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#f8f9fa' }}>
+        <LayoutWrapper>
+            <View style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#f8f9fa' }}>
             <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                 backgroundColor={isDarkMode ? '#1c1c1e' : '#fff'}
@@ -187,7 +189,7 @@ export default function WithdrawScreen() {
 
                     <TextInput
                         style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
-                        placeholder="$ Enter amount"
+                        placeholder=""
                         keyboardType="numeric"
                         value={amount}
                         onChangeText={setAmount}
@@ -270,6 +272,7 @@ export default function WithdrawScreen() {
                 </TouchableOpacity>
             </ScrollView>
         </View>
+        </LayoutWrapper>
     );
 }
 

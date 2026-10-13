@@ -19,6 +19,7 @@ import MapView, { Marker, Polyline } from 'react-native-maps'
 import * as Location from 'expo-location'
 import { BlurView } from 'expo-blur'
 import useThemeStore from '@/src/features/theme/theme.service'
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper'
 
 const { width } = Dimensions.get('window')
 
@@ -295,7 +296,8 @@ export default function OrderDetailPage() {
     };
 
     return (
-        <View style={[styles.page, isDarkMode && { backgroundColor: '#121212' }]}>
+        <LayoutWrapper>
+            <View style={[styles.page, isDarkMode && { backgroundColor: '#121212' }]}>
             <ScrollView
                 style={isDarkMode && { backgroundColor: '#121212' }}
                 contentContainerStyle={styles.scrollContent}
@@ -453,6 +455,7 @@ export default function OrderDetailPage() {
                 )}
             </View>
         </View>
+        </LayoutWrapper>
     )
 }
 

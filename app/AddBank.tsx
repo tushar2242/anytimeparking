@@ -19,6 +19,7 @@ import useDriverStore from '@/src/features/user/user.service';
 import useAuthStore from '@/src/features/auth/auth.service';
 import { showToast } from '@/src/utils/toast';
 import useThemeStore from '@/src/features/theme/theme.service';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 
 export default function AddBankScreen() {
     const navigation = useNavigation();
@@ -125,10 +126,11 @@ export default function AddBankScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#f8f9fa' }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <LayoutWrapper>
+            <KeyboardAvoidingView
+                style={{ flex: 1, backgroundColor: isDarkMode ? '#121212' : '#f8f9fa' }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
             <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
                 backgroundColor={isDarkMode ? '#1c1c1e' : '#fff'}
@@ -211,7 +213,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={bankName}
                                     onChangeText={setBankName}
-                                    placeholder="e.g. HDFC Bank, SBI, ICICI"
+                                    placeholder=""
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
                             </View>
@@ -222,7 +224,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={holderName}
                                     onChangeText={setHolderName}
-                                    placeholder="Enter account holder name"
+                                    placeholder=""
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
                             </View>
@@ -233,7 +235,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={accountNumber}
                                     onChangeText={setAccountNumber}
-                                    placeholder="Enter account number"
+                                    placeholder=""
                                     keyboardType="numeric"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                     secureTextEntry={true}
@@ -246,7 +248,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={confirmAccountNumber}
                                     onChangeText={setConfirmAccountNumber}
-                                    placeholder="Re-enter account number"
+                                    placeholder=""
                                     keyboardType="numeric"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
@@ -258,7 +260,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={ifscCode}
                                     onChangeText={setIfscCode}
-                                    placeholder="e.g. HDFC0001234"
+                                    placeholder=""
                                     autoCapitalize="characters"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
@@ -293,6 +295,7 @@ export default function AddBankScreen() {
                 )}
             </ScrollView>
         </KeyboardAvoidingView>
+        </LayoutWrapper>
     );
 }
 

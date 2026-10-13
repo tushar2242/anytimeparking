@@ -134,7 +134,7 @@ export default function VerifyOTPScreen() {
                         <Feather name="key" size={18} color={isDarkMode ? '#777' : '#999'} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
-                            placeholder="Enter 6-digit code"
+                            placeholder=""
                             keyboardType="number-pad"
                             maxLength={6}
                             value={otp}
@@ -150,7 +150,7 @@ export default function VerifyOTPScreen() {
                         <Feather name="lock" size={18} color={isDarkMode ? '#777' : '#999'} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
-                            placeholder="Enter new password"
+                            placeholder=""
                             secureTextEntry={!showPassword}
                             value={newPassword}
                             onChangeText={setNewPassword}
@@ -168,7 +168,7 @@ export default function VerifyOTPScreen() {
                         <Feather name="lock" size={18} color={isDarkMode ? '#777' : '#999'} style={styles.inputIcon} />
                         <TextInput
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
-                            placeholder="Confirm new password"
+                            placeholder=""
                             secureTextEntry={!showConfirmPassword}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}

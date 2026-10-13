@@ -1,21 +1,24 @@
 import React from 'react';
 import { View, Text, StyleSheet, StatusBar } from 'react-native';
 import useThemeStore from '@/src/features/theme/theme.service';
+import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 
 const SupportScreen = () => {
     const isDarkMode = useThemeStore().isDarkMode;
 
     return (
-        <View style={[styles.container, isDarkMode && { backgroundColor: '#121212' }]}>
-            <StatusBar
-                barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                backgroundColor={isDarkMode ? '#1c1c1e' : '#fff'}
-            />
-            <Text style={[styles.title, isDarkMode && { color: '#ffffff' }]}>💬 Support</Text>
-            <Text style={[styles.text, isDarkMode && { color: '#a0a0a0' }]}>
-                Need help? Contact our support team anytime.
-            </Text>
-        </View>
+        <LayoutWrapper>
+            <View style={[styles.container, isDarkMode && { backgroundColor: '#121212' }]}>
+                <StatusBar
+                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                    backgroundColor={isDarkMode ? '#1c1c1e' : '#fff'}
+                />
+                <Text style={[styles.title, isDarkMode && { color: '#ffffff' }]}>💬 Support</Text>
+                <Text style={[styles.text, isDarkMode && { color: '#a0a0a0' }]}>
+                    Need help? Contact our support team anytime.
+                </Text>
+            </View>
+        </LayoutWrapper>
     );
 };
 

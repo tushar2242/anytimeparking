@@ -52,7 +52,8 @@ api.interceptors.response.use(
             return Promise.reject(error)
         }
 
-        if (error.response?.status === 401) {
+        const isLoginRequest = error.config?.url?.includes('/login') || error.config?.url?.includes('/auth/login')
+        if (error.response?.status === 401 && !isLoginRequest) {
             await AsyncStorage.removeItem('token')
             await AsyncStorage.removeItem('user')
 
@@ -87,7 +88,10 @@ export function handleApiError(error: AxiosError<ApiError> | any): string {
         const data = error.response.data
 
         if (status === 401) {
-            message = 'Session expired. Please log in again.'
+            const isLogin = error.config?.url?.includes('/login') || error.config?.url?.includes('/auth/login')
+            message = isLogin
+                ? (data?.message || data?.error || 'Invalid credentials. Please check your phone and password.')
+                : 'Session expired. Please log in again.'
         } else if (status === 403) {
             message = 'Access denied. You do not have permission to perform this action.'
         } else if (status === 404) {

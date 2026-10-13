@@ -82,7 +82,7 @@ export default function HeaderRight() {
                 <View style={styles.searchContainer}>
                     <Feather name="search" size={18} color="#666" style={{ marginRight: 8 }} />
                     <TextInput
-                        placeholder="Search orders, transactions..."
+                        placeholder=""
                         value={query}
                         onChangeText={setQuery}
                         style={styles.input}

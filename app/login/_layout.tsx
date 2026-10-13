@@ -1,5 +1,5 @@
 import { useAuth } from '@/src/context/AuthContext'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     ScrollView,
     StatusBar,
     Dimensions,
+    BackHandler,
 } from 'react-native'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
@@ -31,6 +32,20 @@ export default function LoginScreen() {
 
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+
+    useEffect(() => {
+        const onBackPress = () => {
+            BackHandler.exitApp()
+            return true
+        }
+
+        const subscription = BackHandler.addEventListener(
+            'hardwareBackPress',
+            onBackPress
+        )
+
+        return () => subscription.remove()
+    }, [])
 
     const handleChange = (field: keyof typeof form, value: string) => {
         setForm(prev => ({ ...prev, [field]: value }))
@@ -93,7 +108,7 @@ export default function LoginScreen() {
                             <Feather name="phone" size={18} color="#8E8E93" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="(555) 234-5678"
+                                placeholder=""
                                 keyboardType="phone-pad"
                                 value={form.phone}
                                 onChangeText={value => handleChange('phone', value)}
@@ -109,7 +124,7 @@ export default function LoginScreen() {
                             <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder="••••••••••••"
+                                placeholder=""
                                 secureTextEntry={!showPassword}
                                 value={form.password}
                                 onChangeText={value => handleChange('password', value)}

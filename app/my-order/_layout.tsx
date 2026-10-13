@@ -362,7 +362,7 @@ export default function MyOrdersPage() {
             {
                 name: currentUser?.name || currentUser?.phone || 'Current Driver',
                 count: totalHandled,
-                role: currentUser?.role || 'Valet Driver',
+                role: (currentUser as any)?.role || 'Valet Driver',
                 active: true
             },
         ];
@@ -713,4 +713,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 0.5,
     },
-})
+    emptySubtitle: {
+        fontSize: 13,
+        color: '#8E8E93',
+        fontWeight: '500',
+        textAlign: 'center',
+    },
+});

@@ -104,7 +104,7 @@ const OTPScreen = () => {
                         onChangeText={setOtp}
                         keyboardType="number-pad"
                         maxLength={6}
-                        placeholder="123456"
+                        placeholder=""
                         placeholderTextColor={isDarkMode ? '#666' : '#999'}
                     />
                 </View>
