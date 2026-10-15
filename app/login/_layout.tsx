@@ -108,11 +108,11 @@ export default function LoginScreen() {
                             <Feather name="phone" size={18} color="#8E8E93" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder=""
+                                placeholder="Mobile Number"
                                 keyboardType="phone-pad"
                                 value={form.phone}
                                 onChangeText={value => handleChange('phone', value)}
-                                placeholderTextColor="#C7C7CC"
+                                placeholderTextColor="#8E8E93"
                             />
                         </View>
                     </View>
@@ -124,11 +124,11 @@ export default function LoginScreen() {
                             <Feather name="lock" size={18} color="#8E8E93" style={styles.inputIcon} />
                             <TextInput
                                 style={styles.input}
-                                placeholder=""
+                                placeholder="Password"
                                 secureTextEntry={!showPassword}
                                 value={form.password}
                                 onChangeText={value => handleChange('password', value)}
-                                placeholderTextColor="#C7C7CC"
+                                placeholderTextColor="#8E8E93"
                             />
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                                 <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#8E8E93" />

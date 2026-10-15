@@ -122,7 +122,7 @@ const InputField: React.FC<InputFieldProps> = ({
                     ]}
                     value={value}
                     onChangeText={onChangeText}
-                    placeholder={placeholder || ''}
+                    placeholder={placeholder || label}
                     placeholderTextColor={COLORS.textLight}
                     keyboardType={keyboardType}
                     onFocus={handleFocus}

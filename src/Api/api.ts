@@ -149,7 +149,7 @@ export async function post<T>(endpoint: string, data: any, opt?: PostPutOpt): Pr
             ? { headers: { 'Content-Type': 'multipart/form-data' } }
             : { headers: { 'Content-Type': 'application/json' } }
 
-        console.log('baseurl------------', baseURL)
+        console.log('baseurl------------', baseURL, endpoint, data)
         const response = await api.post(endpoint, data, config)
         return response.data as any
     } catch (error: any) {

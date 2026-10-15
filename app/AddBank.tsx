@@ -213,7 +213,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={bankName}
                                     onChangeText={setBankName}
-                                    placeholder=""
+                                    placeholder="Bank Name"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
                             </View>
@@ -224,7 +224,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={holderName}
                                     onChangeText={setHolderName}
-                                    placeholder=""
+                                    placeholder="Account Holder Name"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
                             </View>
@@ -235,7 +235,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={accountNumber}
                                     onChangeText={setAccountNumber}
-                                    placeholder=""
+                                    placeholder="Bank Account Number"
                                     keyboardType="numeric"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                     secureTextEntry={true}
@@ -248,7 +248,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={confirmAccountNumber}
                                     onChangeText={setConfirmAccountNumber}
-                                    placeholder=""
+                                    placeholder="Confirm Account Number"
                                     keyboardType="numeric"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />
@@ -260,7 +260,7 @@ export default function AddBankScreen() {
                                     style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
                                     value={ifscCode}
                                     onChangeText={setIfscCode}
-                                    placeholder=""
+                                    placeholder="IFSC Code"
                                     autoCapitalize="characters"
                                     placeholderTextColor={isDarkMode ? '#666' : '#999'}
                                 />

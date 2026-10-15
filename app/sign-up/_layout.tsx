@@ -56,7 +56,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="user" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="Full Name"
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}
                             value={form.fullName}
@@ -70,7 +70,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="mail" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="Email Address"
                             keyboardType="email-address"
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}
@@ -85,7 +85,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="phone" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="Phone Number"
                             keyboardType="phone-pad"
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}
@@ -100,7 +100,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="file-text" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="License Number"
                             autoCapitalize="characters"
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}
@@ -115,7 +115,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="lock" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="Password"
                             secureTextEntry={!showPassword}
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}
@@ -133,7 +133,7 @@ const SignupScreen = () => {
                     <View style={[styles.inputWrapper, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#333' }]}>
                         <Feather name="lock" size={18} color={isDarkMode ? '#777' : '#adb5bd'} style={styles.inputIcon} />
                         <TextInput
-                            placeholder=""
+                            placeholder="Confirm Password"
                             secureTextEntry={!showConfirm}
                             style={[styles.input, isDarkMode && { color: '#ffffff' }]}
                             placeholderTextColor={isDarkMode ? '#666' : '#adb5bd'}

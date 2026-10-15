@@ -189,7 +189,7 @@ export default function WithdrawScreen() {
 
                     <TextInput
                         style={[styles.input, isDarkMode && { backgroundColor: '#2c2c2e', color: '#fff', borderColor: '#444' }]}
-                        placeholder=""
+                        placeholder="Enter Amount"
                         keyboardType="numeric"
                         value={amount}
                         onChangeText={setAmount}
