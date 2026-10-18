@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { ScrollView, View, Text, Pressable, StyleSheet, Share, Alert, BackHandler, TouchableOpacity, ActivityIndicator } from 'react-native'
 import LayoutWrapper from '@/components/wrapper/LayoutWrapper'
-import { formatDateTime } from '@/src/utils/date'
+import { formatDateTime, formatTime } from '@/src/utils/date'
 import OrderCard from '@/components/card/OrderCard'
 import useValetStore from '@/src/features/valetOrder/order.service'
 import useTransactionStore from '@/src/features/transaction/trans.service'
@@ -118,33 +118,33 @@ export default function MyOrdersPage() {
     const displayArrived = [
         ...allOrders.filter(o => o.status === 'parked' || o.status === 'returned' || o.status === 'completed').map(o => ({
             vehicle_number: o.vehicle_number || 'N/A',
-            time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : (o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A')
+            time: o.parked_at ? formatTime(o.parked_at) : (o.created_at ? formatTime(o.created_at) : 'N/A')
         })),
         ...cardTickets.map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
-            time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+            time: t.entry_time ? formatTime(t.entry_time) : (t.created_at ? formatTime(t.created_at) : 'N/A')
         }))
     ];
 
     const displayDeparted = [
         ...allOrders.filter(o => o.status === 'returned' || o.status === 'completed').map(o => ({
             vehicle_number: o.vehicle_number || 'N/A',
-            time: o.returned_at ? new Date(o.returned_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+            time: o.returned_at ? formatTime(o.returned_at) : 'N/A'
         })),
         ...cardTickets.filter(t => t.status === 'returned').map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
-            time: t.exit_time ? new Date(t.exit_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+            time: t.exit_time ? formatTime(t.exit_time) : 'N/A'
         }))
     ];
 
     const displayRemaining = [
         ...allOrders.filter(o => o.status === 'parked' || o.status === 'running' || o.status === 'accepted' || o.status === 'booked').map(o => ({
             vehicle_number: o.vehicle_number || 'N/A',
-            time: o.parked_at ? new Date(o.parked_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : (o.created_at ? new Date(o.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A')
+            time: o.parked_at ? formatTime(o.parked_at) : (o.created_at ? formatTime(o.created_at) : 'N/A')
         })),
         ...cardTickets.filter(t => t.status !== 'returned').map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
-            time: t.created_at ? new Date(t.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'N/A'
+            time: t.entry_time ? formatTime(t.entry_time) : (t.created_at ? formatTime(t.created_at) : 'N/A')
         }))
     ];
 

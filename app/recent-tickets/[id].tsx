@@ -20,6 +20,7 @@ import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import * as WebBrowser from 'expo-web-browser';
 
 import Api, { baseURL } from '@/src/Api/api';
+import { formatDateTime } from '@/src/utils/date';
 
 export default function TicketDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -75,8 +76,8 @@ export default function TicketDetailsScreen() {
     const custPhone = liveTicket?.mobile_no || liveTicket?.phone_no || liveTicket?.phone || liveTicket?.customer_phone || 'N/A';
     const pSite = liveTicket?.parking_site || liveTicket?.site?.name || liveTicket?.valet_site?.name || liveTicket?.location || 'Valet Site';
     const isRet = liveTicket?.status === 'returned' || liveTicket?.status === 'completed';
-    const reqAt = liveTicket?.created_at ? new Date(liveTicket.created_at).toLocaleString() : (liveTicket?.requested_at ? new Date(liveTicket.requested_at).toLocaleString() : 'Recent');
-    const exitT = liveTicket?.exit_time ? new Date(liveTicket.exit_time).toLocaleString() : (liveTicket?.returned_at ? new Date(liveTicket.returned_at).toLocaleString() : (isRet ? 'Completed' : 'Active Session'));
+    const reqAt = liveTicket?.entry_time ? formatDateTime(liveTicket.entry_time) : (liveTicket?.created_at ? formatDateTime(liveTicket.created_at) : (liveTicket?.requested_at ? formatDateTime(liveTicket.requested_at) : 'Recent'));
+    const exitT = liveTicket?.exit_time ? formatDateTime(liveTicket.exit_time) : (liveTicket?.returned_at ? formatDateTime(liveTicket.returned_at) : (isRet ? 'Completed' : 'Active Session'));
 
     const ticketData = {
         ticketId: tId,

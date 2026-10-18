@@ -17,6 +17,7 @@ import useValetStore from '@/src/features/valetOrder/order.service';
 import BottomTabBar from '@/components/navigation/BottomTabBar';
 import LayoutWrapper from '@/components/wrapper/LayoutWrapper';
 import Api from '@/src/Api/api';
+import { formatDateTime, formatTime } from '@/src/utils/date';
 
 export interface TicketItem {
     id: string;
@@ -76,9 +77,9 @@ export default function RecentTicketsScreen() {
         parkingSite: ord.site?.name || ord.valet_site?.name || ord.parking_site || ord.location || 'Valet Site',
         keySlot: ord.key_slot || (ord.valet_slot ? `Slot #${ord.valet_slot}` : `Key #${ord.id || '01'}`),
         status: (ord.status === 'returned' || ord.status === 'completed') ? 'returned' : 'parked',
-        requestedAt: ord.requested_at ? new Date(ord.requested_at).toLocaleString() : 'Recent',
-        entryTime: ord.parked_at ? new Date(ord.parked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (ord.created_at ? new Date(ord.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'),
-        exitTime: ord.returned_at ? new Date(ord.returned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+        requestedAt: ord.requested_at ? formatDateTime(ord.requested_at) : 'Recent',
+        entryTime: ord.parked_at ? formatTime(ord.parked_at) : (ord.created_at ? formatTime(ord.created_at) : 'N/A'),
+        exitTime: ord.returned_at ? formatTime(ord.returned_at) : null,
         duration: 'N/A',
     }));
 
@@ -93,9 +94,9 @@ export default function RecentTicketsScreen() {
         parkingSite: t.parking_site || t.site?.name || 'Valet Site',
         keySlot: t.key_slot || `Key Box #${t.id ? String(t.id).slice(-4) : 'A-1'}`,
         status: t.status === 'returned' ? 'returned' : 'parked',
-        requestedAt: t.created_at ? new Date(t.created_at).toLocaleString() : 'Recent',
-        entryTime: t.created_at ? new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A',
-        exitTime: t.exit_time ? new Date(t.exit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null,
+        requestedAt: t.created_at ? formatDateTime(t.created_at) : 'Recent',
+        entryTime: t.entry_time ? formatTime(t.entry_time) : (t.created_at ? formatTime(t.created_at) : 'N/A'),
+        exitTime: t.exit_time ? formatTime(t.exit_time) : null,
         duration: 'N/A',
     }));
 

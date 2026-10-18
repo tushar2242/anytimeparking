@@ -11,6 +11,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect } from 'react-native-svg';
 import Api from '../../src/Api/api';
+import { parseUtcDate } from '../../src/utils/date';
 
 const { width } = Dimensions.get('window');
 
@@ -95,8 +96,8 @@ export default function DriverHome() {
 
     // Calculate real dynamic stats directly from user orders and card tickets
     const today = new Date().toDateString();
-    const todayOrders = myOrders.filter(order => order.requested_at && new Date(order.requested_at).toDateString() === today);
-    const todayCards = cardParkings.filter(t => t.created_at && new Date(t.created_at).toDateString() === today);
+    const todayOrders = myOrders.filter(order => order.requested_at && parseUtcDate(order.requested_at)?.toDateString() === today);
+    const todayCards = cardParkings.filter(t => (t.entry_time || t.created_at) && parseUtcDate(t.entry_time || t.created_at)?.toDateString() === today);
 
     const ticketsTodayCount = todayOrders.length + todayCards.length;
     const keysReturnedCount = myOrders.filter(order => order.status === 'returned' || order.status === 'completed').length +

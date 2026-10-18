@@ -27,6 +27,7 @@ import HeaderNavbar from '@/components/card-parking/HeaderNavbar';
 import { TicketData } from '@/components/card-parking/CardParkingTypes';
 import { exportImageToPdf } from '@/src/utils/pdf';
 import { useLocalSearchParams } from 'expo-router';
+import { formatDateTime } from '@/src/utils/date';
 
 const qrcode = require('qrcode-generator');
 
@@ -424,7 +425,7 @@ export default function ValetAttendantWorkflowScreen() {
                 const owner = ticketData.name || ticketData.customer_name || ticketData.owner_name || 'Customer';
                 const ph = ticketData.mobile_no || ticketData.phone_no || ticketData.phone || 'N/A';
                 const siteName = ticketData.parking_site || (selectedSite ? selectedSite.name : 'Valet Site');
-                const entryT = ticketData.created_at ? new Date(ticketData.created_at).toLocaleString() : 'Recent';
+                const entryT = (ticketData.entry_time || ticketData.created_at) ? formatDateTime(ticketData.entry_time || ticketData.created_at) : 'Recent';
 
                 setFoundTicket({
                     ticketId: tId,
@@ -508,7 +509,7 @@ export default function ValetAttendantWorkflowScreen() {
                 const owner = ticketData.name || ticketData.customer_name || ticketData.owner_name || 'Customer';
                 const ph = ticketData.mobile_no || ticketData.phone_no || ticketData.phone || 'N/A';
                 const siteName = ticketData.parking_site || (selectedSite ? selectedSite.name : 'Valet Site');
-                const entryT = ticketData.created_at ? new Date(ticketData.created_at).toLocaleString() : 'Recent';
+                const entryT = (ticketData.entry_time || ticketData.created_at) ? formatDateTime(ticketData.entry_time || ticketData.created_at) : 'Recent';
 
                 setFoundTicket({
                     ticketId: tId,
@@ -541,7 +542,7 @@ export default function ValetAttendantWorkflowScreen() {
                 vehicleNumber: item.car_no || item.vehicle_number || '',
                 vehicleType: item.vehicle_type || [item.brand, item.model].filter(Boolean).join(' ') || 'Vehicle',
                 ownerName: item.name || item.customer_name || 'Customer',
-                entryTime: item.created_at ? new Date(item.created_at).toLocaleString() : '',
+                entryTime: (item.entry_time || item.created_at) ? formatDateTime(item.entry_time || item.created_at) : '',
                 parkingSite: item.parking_site || '',
                 phone: item.phone || item.mobile_no || '',
                 photo: item.photo || null,
