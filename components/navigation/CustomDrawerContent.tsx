@@ -69,16 +69,29 @@ export default function CustomDrawerContent(props: any) {
                     />
 
                     <DrawerItem
-                        label="QR Parking"
-                        focused={isActive('/card-parking')}
+                        label="Check-In"
+                        focused={isActive('/card-parking/check-in') || isActive('/car-parking/check-in') || isActive('/car-parking') || isActive('/card-parking')}
                         labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
-                        activeTintColor={isDarkMode ? '#0A84FF' : '#484849'}
+                        activeTintColor={isDarkMode ? '#0A84FF' : '#0066FF'}
                         inactiveTintColor={isDarkMode ? '#a0a0a0' : '#444'}
                         activeBackgroundColor={isDarkMode ? '#2c2c2e' : '#eee'}
                         icon={({ color, size }) => (
-                            <Ionicons name="qr-code-outline" color={color} size={size} />
+                            <Ionicons name="car-sport-outline" color={color} size={size} />
                         )}
-                        onPress={() => router.push('/card-parking' as any)}
+                        onPress={() => router.push('/card-parking/check-in' as any)}
+                    />
+
+                    <DrawerItem
+                        label="Key Return"
+                        focused={isActive('/card-parking/key-return') || isActive('/car-parking/key-return')}
+                        labelStyle={[styles.label, { color: isDarkMode ? '#fff' : '#333' }]}
+                        activeTintColor="#FF851B"
+                        inactiveTintColor={isDarkMode ? '#a0a0a0' : '#444'}
+                        activeBackgroundColor={isDarkMode ? '#2c2c2e' : '#eee'}
+                        icon={({ color, size }) => (
+                            <Ionicons name="key-outline" color={color} size={size} />
+                        )}
+                        onPress={() => router.push('/card-parking/key-return' as any)}
                     />
 
                     <DrawerItem

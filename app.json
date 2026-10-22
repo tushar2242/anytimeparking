@@ -4,7 +4,7 @@
     "slug": "parkingvalet",
     "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./assets/images/driverxlogo.jpeg",
+    "icon": "./assets/images/driverxlogo.png",
     "scheme": "driverapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
@@ -29,8 +29,8 @@
         }
       },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/driverxlogo.jpeg",
-        "backgroundColor": "#FFD700"
+        "foregroundImage": "./assets/images/driverxlogo.png",
+        "backgroundColor": "#FFFFFF"
       },
       "permissions": [
         "INTERNET",
@@ -52,10 +52,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/driverxlogo.jpeg",
+          "image": "./assets/images/driverxlogo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#FFD700"
+          "backgroundColor": "#FFFFFF"
         }
       ],
       "expo-web-browser"

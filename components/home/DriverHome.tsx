@@ -71,7 +71,7 @@ export default function DriverHome() {
 
     const valetStore = useValetStore();
     const myOrders = valetStore.valet.myOrders || [];
-    const [cardParkings, setCardParkings] = React.useState<any[]>([]);
+    const [carParkings, setCarParkings] = React.useState<any[]>([]);
 
     useEffect(() => {
         // Fetch fresh driver orders and user profile on mount
@@ -81,9 +81,9 @@ export default function DriverHome() {
             try {
                 const res = await Api.get('/card-parking');
                 const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
-                setCardParkings(list);
+                setCarParkings(list);
             } catch (e) {
-                console.log('Error loading card parkings in home:', e);
+                console.log('Error loading car parkings in home:', e);
             }
         };
 
@@ -94,16 +94,16 @@ export default function DriverHome() {
         return () => clearInterval(syncInterval);
     }, []);
 
-    // Calculate real dynamic stats directly from user orders and card tickets
+    // Calculate real dynamic stats directly from user orders and car tickets
     const today = new Date().toDateString();
     const todayOrders = myOrders.filter(order => order.requested_at && parseUtcDate(order.requested_at)?.toDateString() === today);
-    const todayCards = cardParkings.filter(t => (t.entry_time || t.created_at) && parseUtcDate(t.entry_time || t.created_at)?.toDateString() === today);
+    const todayCars = carParkings.filter(t => (t.entry_time || t.created_at) && parseUtcDate(t.entry_time || t.created_at)?.toDateString() === today);
 
-    const ticketsTodayCount = todayOrders.length + todayCards.length;
+    const ticketsTodayCount = todayOrders.length + todayCars.length;
     const keysReturnedCount = myOrders.filter(order => order.status === 'returned' || order.status === 'completed').length +
-        cardParkings.filter(t => t.status === 'returned').length;
+        carParkings.filter(t => t.status === 'returned').length;
     const vehiclesParkedCount = myOrders.filter(order => order.status === 'parked' || order.status === 'running').length +
-        cardParkings.filter(t => t.status !== 'returned').length;
+        carParkings.filter(t => t.status !== 'returned').length;
 
     const openDrawer = () => {
         navigation.dispatch(DrawerActions.openDrawer());
@@ -186,7 +186,7 @@ export default function DriverHome() {
                     {/* Generate Ticket Card */}
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => router.push({ pathname: '/card-parking', params: { mode: 'generate' } } as any)}
+                        onPress={() => router.push('/card-parking/check-in' as any)}
                         style={styles.cardWrapper}
                     >
                         <LinearGradient
@@ -215,7 +215,7 @@ export default function DriverHome() {
                     {/* Key Return Card */}
                     <TouchableOpacity
                         activeOpacity={0.9}
-                        onPress={() => router.push({ pathname: '/card-parking', params: { mode: 'scan' } } as any)}
+                        onPress={() => router.push('/card-parking/key-return' as any)}
                         style={styles.cardWrapper}
                     >
                         <LinearGradient

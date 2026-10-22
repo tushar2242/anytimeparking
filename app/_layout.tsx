@@ -101,8 +101,47 @@ export default function Layout() {
             }} />
 
             <Drawer.Screen
+              name="car-parking/index"
+              options={{
+                headerShown: false,
+              }}
+            />
+
+            <Drawer.Screen
+              name="car-parking/check-in"
+              options={{
+                drawerItemStyle: { display: 'none' },
+                headerShown: false,
+              }}
+            />
+
+            <Drawer.Screen
+              name="car-parking/key-return"
+              options={{
+                drawerItemStyle: { display: 'none' },
+                headerShown: false,
+              }}
+            />
+
+            <Drawer.Screen
               name="card-parking/index"
               options={{
+                headerShown: false,
+              }}
+            />
+
+            <Drawer.Screen
+              name="card-parking/check-in"
+              options={{
+                drawerItemStyle: { display: 'none' },
+                headerShown: false,
+              }}
+            />
+
+            <Drawer.Screen
+              name="card-parking/key-return"
+              options={{
+                drawerItemStyle: { display: 'none' },
                 headerShown: false,
               }}
             />

@@ -274,151 +274,151 @@ export default function HotelDetailPage() {
     return (
         <LayoutWrapper>
             <View style={[styles.page, isDarkMode && { backgroundColor: '#121212' }]}>
-            <ScrollView
-                style={isDarkMode && { backgroundColor: '#121212' }}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Header Icons */}
-                <View style={styles.headerIcons}>
-                    <TouchableOpacity onPress={handleBack} style={[styles.iconButton, isDarkMode && { backgroundColor: 'rgba(30, 30, 30, 0.95)' }]}>
-                        <Ionicons name="arrow-back" size={24} color={isDarkMode ? '#fff' : '#333'} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={shareHotel} style={[styles.iconButton, isDarkMode && { backgroundColor: 'rgba(30, 30, 30, 0.95)' }]}>
-                        <Ionicons name="share-social" size={24} color={isDarkMode ? '#fff' : '#333'} />
-                    </TouchableOpacity>
-                </View>
+                <ScrollView
+                    style={isDarkMode && { backgroundColor: '#121212' }}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header Icons */}
+                    <View style={styles.headerIcons}>
+                        <TouchableOpacity onPress={handleBack} style={[styles.iconButton, isDarkMode && { backgroundColor: 'rgba(30, 30, 30, 0.95)' }]}>
+                            <Ionicons name="arrow-back" size={24} color={isDarkMode ? '#fff' : '#333'} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={shareHotel} style={[styles.iconButton, isDarkMode && { backgroundColor: 'rgba(30, 30, 30, 0.95)' }]}>
+                            <Ionicons name="share-social" size={24} color={isDarkMode ? '#fff' : '#333'} />
+                        </TouchableOpacity>
+                    </View>
 
-                {/* Image Carousel */}
-                {/* Driver X Image Header */}
-                <View style={{ position: 'relative', width: '100%', height: 270, backgroundColor: isDarkMode ? '#1c1c1e' : '#000', justifyContent: 'center', alignItems: 'center' }}>
-                    <Image
-                        source={require('@/assets/images/driverxlogo.jpeg')}
-                        style={{ width: '100%', height: '100%' }}
-                        resizeMode="contain"
-                    />
-                    {/* Overlay to intercept touches and open Google Maps */}
-                    <TouchableOpacity
-                        style={StyleSheet.absoluteFillObject}
-                        onPress={handleOpenInGoogleMaps}
-                        activeOpacity={0.9}
-                    />
-                </View>
+                    {/* Image Carousel */}
+                    {/* Driver X Image Header */}
+                    <View style={{ position: 'relative', width: '100%', height: 270, backgroundColor: isDarkMode ? '#1c1c1e' : '#000', justifyContent: 'center', alignItems: 'center' }}>
+                        <Image
+                            source={require('@/assets/images/driverxlogo.png')}
+                            style={{ width: '100%', height: '100%' }}
+                            resizeMode="contain"
+                        />
+                        {/* Overlay to intercept touches and open Google Maps */}
+                        <TouchableOpacity
+                            style={StyleSheet.absoluteFillObject}
+                            onPress={handleOpenInGoogleMaps}
+                            activeOpacity={0.9}
+                        />
+                    </View>
 
-                {/* Content Container */}
-                <View style={styles.content}>
-                    {/* Title Section */}
-                    <View style={styles.titleSection}>
-                        <Text style={[styles.title, isDarkMode && { color: '#ffffff' }]}>{site?.name || 'Valet Site'}</Text>
-                        <View style={styles.locationRow}>
-                            <Ionicons name="location" size={18} color={isDarkMode ? '#a0a0a0' : '#666'} />
-                            <Text style={[styles.subtitle, isDarkMode && { color: '#a0a0a0' }]}>
-                                {site?.address || ''}, {site?.city || ''}
+                    {/* Content Container */}
+                    <View style={styles.content}>
+                        {/* Title Section */}
+                        <View style={styles.titleSection}>
+                            <Text style={[styles.title, isDarkMode && { color: '#ffffff' }]}>{site?.name || 'Valet Site'}</Text>
+                            <View style={styles.locationRow}>
+                                <Ionicons name="location" size={18} color={isDarkMode ? '#a0a0a0' : '#666'} />
+                                <Text style={[styles.subtitle, isDarkMode && { color: '#a0a0a0' }]}>
+                                    {site?.address || ''}, {site?.city || ''}
+                                </Text>
+                            </View>
+                        </View>
+
+
+
+                        <Divider style={[styles.divider, isDarkMode && { backgroundColor: '#2c2c2e' }]} />
+
+                        {/* Price & Drivers Card */}
+                        <View style={[styles.priceCard, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}>
+                            <View style={styles.priceRow}>
+                                <View>
+                                    <Text style={[styles.priceLabel, isDarkMode && { color: '#a0a0a0' }]}>Price per Driver</Text>
+                                    <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>${price}</Text>
+                                </View>
+                                <View style={styles.driversInfo}>
+                                    <Ionicons name="people" size={20} color="#2e7d32" />
+                                    <Text style={[styles.driversText, isDarkMode && { color: '#81c784' }]}>{valet.valet_slot} Drivers</Text>
+                                </View>
+                            </View>
+                        </View>
+
+
+                        {/* Status Badge */}
+                        {valet.status === 'booked' && (
+                            <View style={[styles.statusBadge, isDarkMode && { backgroundColor: '#1b3b22', borderColor: '#2c2c2e' }]}>
+                                <Ionicons name="checkmark-circle" size={22} color="#2e7d32" />
+                                <Text style={[styles.statusText, isDarkMode && { color: '#81c784' }]}>Booking Confirmed</Text>
+                            </View>
+                        )}
+
+                        {/* Notes Section */}
+                        <View style={[styles.notesCard, isDarkMode && { backgroundColor: '#2a1a1a', borderColor: '#3a2020' }]}>
+                            <View style={styles.noteHeader}>
+                                <Ionicons name="information-circle" size={20} color="#e71010" />
+                                <Text style={[styles.noteTitle, isDarkMode && { color: '#ffb3b3' }]}>Notice -:</Text>
+                            </View>
+                            <Text style={[styles.notesText, isDarkMode && { color: '#ffb3b3' }]}>
+                                {valet?.note || 'Please drive safely and follow all parking rules.'}
+
+                            </Text>
+                            <Text style={[styles.notesText, isDarkMode && { color: '#ffb3b3' }]}>
+                                {valet?.note || 'Read all Policy.'}
                             </Text>
                         </View>
+
+                        {/* Parking Location Section */}
+
+                        <TouchableOpacity
+                            style={[styles.locationCard, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}
+                            onPress={() =>
+                                Linking.openURL(
+                                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                        `${site?.name || ''}, ${site?.address || ''}, ${site?.city || ''}`
+                                    )}`
+                                )
+                            }
+                        >
+                        </TouchableOpacity>
                     </View>
+                </ScrollView>
 
 
-
-                    <Divider style={[styles.divider, isDarkMode && { backgroundColor: '#2c2c2e' }]} />
-
-                    {/* Price & Drivers Card */}
-                    <View style={[styles.priceCard, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}>
-                        <View style={styles.priceRow}>
-                            <View>
-                                <Text style={[styles.priceLabel, isDarkMode && { color: '#a0a0a0' }]}>Price per Driver</Text>
-                                <Text style={[styles.price, isDarkMode && { color: '#ffffff' }]}>${price}</Text>
-                            </View>
-                            <View style={styles.driversInfo}>
-                                <Ionicons name="people" size={20} color="#2e7d32" />
-                                <Text style={[styles.driversText, isDarkMode && { color: '#81c784' }]}>{valet.valet_slot} Drivers</Text>
-                            </View>
+                {/* Bottom Action Bar */}
+                <View style={[styles.bottomBar, isDarkMode && { backgroundColor: '#1c1c1e', borderTopColor: '#2c2c2e' }]}>
+                    {valet.status === 'booked' ? (
+                        <View style={styles.bookedActions}>
+                            <Button
+                                mode="contained"
+                                buttonColor="#dc3545"
+                                style={styles.cancelButton}
+                                labelStyle={styles.buttonLabel}
+                                onPress={handleCancel}
+                                icon="close-circle"
+                            >
+                                Cancel Booking
+                            </Button>
                         </View>
-                    </View>
+                    ) : (
+                        <View style={styles.actionButtons}>
+                            <Button
+                                mode="outlined"
+                                buttonColor="#999"
 
+                                style={[styles.outlinedButton, isDarkMode && { borderColor: '#444' }]}
+                                labelStyle={[styles.outlinedButtonLabel, isDarkMode && { color: '#fff' }]}
+                                onPress={handleBack}
+                            >
+                                Back
+                            </Button>
+                            <Button
+                                mode="contained"
+                                buttonColor="#2e7d32"
 
-                    {/* Status Badge */}
-                    {valet.status === 'booked' && (
-                        <View style={[styles.statusBadge, isDarkMode && { backgroundColor: '#1b3b22', borderColor: '#2c2c2e' }]}>
-                            <Ionicons name="checkmark-circle" size={22} color="#2e7d32" />
-                            <Text style={[styles.statusText, isDarkMode && { color: '#81c784' }]}>Booking Confirmed</Text>
+                                style={styles.bookButton}
+                                labelStyle={styles.buttonLabel}
+                                onPress={handleBook}
+                                icon="calendar-check"
+                            >
+                                Book Now
+                            </Button>
                         </View>
                     )}
-
-                    {/* Notes Section */}
-                    <View style={[styles.notesCard, isDarkMode && { backgroundColor: '#2a1a1a', borderColor: '#3a2020' }]}>
-                        <View style={styles.noteHeader}>
-                            <Ionicons name="information-circle" size={20} color="#e71010" />
-                            <Text style={[styles.noteTitle, isDarkMode && { color: '#ffb3b3' }]}>Notice -:</Text>
-                        </View>
-                        <Text style={[styles.notesText, isDarkMode && { color: '#ffb3b3' }]}>
-                            {valet?.note || 'Please drive safely and follow all parking rules.'}
-
-                        </Text>
-                        <Text style={[styles.notesText, isDarkMode && { color: '#ffb3b3' }]}>
-                            {valet?.note || 'Read all Policy.'}
-                        </Text>
-                    </View>
-
-                    {/* Parking Location Section */}
-
-                    <TouchableOpacity
-                        style={[styles.locationCard, isDarkMode && { backgroundColor: '#1c1c1e', borderColor: '#2c2c2e' }]}
-                        onPress={() =>
-                            Linking.openURL(
-                                `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                    `${site?.name || ''}, ${site?.address || ''}, ${site?.city || ''}`
-                                )}`
-                            )
-                        }
-                    >
-                    </TouchableOpacity>
                 </View>
-            </ScrollView>
-
-
-            {/* Bottom Action Bar */}
-            <View style={[styles.bottomBar, isDarkMode && { backgroundColor: '#1c1c1e', borderTopColor: '#2c2c2e' }]}>
-                {valet.status === 'booked' ? (
-                    <View style={styles.bookedActions}>
-                        <Button
-                            mode="contained"
-                            buttonColor="#dc3545"
-                            style={styles.cancelButton}
-                            labelStyle={styles.buttonLabel}
-                            onPress={handleCancel}
-                            icon="close-circle"
-                        >
-                            Cancel Booking
-                        </Button>
-                    </View>
-                ) : (
-                    <View style={styles.actionButtons}>
-                        <Button
-                            mode="outlined"
-                            buttonColor="#999"
-
-                            style={[styles.outlinedButton, isDarkMode && { borderColor: '#444' }]}
-                            labelStyle={[styles.outlinedButtonLabel, isDarkMode && { color: '#fff' }]}
-                            onPress={handleBack}
-                        >
-                            Back
-                        </Button>
-                        <Button
-                            mode="contained"
-                            buttonColor="#2e7d32"
-
-                            style={styles.bookButton}
-                            labelStyle={styles.buttonLabel}
-                            onPress={handleBook}
-                            icon="calendar-check"
-                        >
-                            Book Now
-                        </Button>
-                    </View>
-                )}
             </View>
-        </View>
         </LayoutWrapper>
     )
 }

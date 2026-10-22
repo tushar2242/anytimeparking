@@ -2,7 +2,7 @@ import Api from '@/src/Api/api';
 import { create } from 'zustand';
 import { combine } from 'zustand/middleware';
 
-export interface CardParkingTicket {
+export interface CarParkingTicket {
     id: string;
     ticket_id?: string;
     ticket_no?: string;
@@ -13,6 +13,10 @@ export interface CardParkingTicket {
     customer_name?: string;
     owner_name?: string;
     photo?: string | null;
+    photo_front?: string | null;
+    photo_rear?: string | null;
+    photo_left?: string | null;
+    photo_right?: string | null;
     mobile_no?: string | null;
     phone_no?: string | null;
     phone?: string | null;
@@ -28,6 +32,8 @@ export interface CardParkingTicket {
     entry_time?: string;
 }
 
+export type CardParkingTicket = CarParkingTicket;
+
 export interface ValetSiteOption {
     id: string;
     name: string;
@@ -40,14 +46,14 @@ export interface ValetSiteOption {
     city?: string;
 }
 
-const useCardParkingStore = create(
+const useCarParkingStore = create(
     combine(
         {
-            tickets: [] as CardParkingTicket[],
+            tickets: [] as CarParkingTicket[],
             loading: false,
             total: 0,
             page: 1,
-            selectedTicket: null as CardParkingTicket | null,
+            selectedTicket: null as CarParkingTicket | null,
             sites: [] as ValetSiteOption[],
         },
         (set, get) => ({
@@ -64,7 +70,7 @@ const useCardParkingStore = create(
                     });
                     return list;
                 } catch (err) {
-                    console.log('Failed to fetch card parkings:', err);
+                    console.log('Failed to fetch car parkings:', err);
                     set({ loading: false });
                     return [];
                 }
@@ -98,7 +104,7 @@ const useCardParkingStore = create(
                         formData: true,
                     });
                     const newTicket = res.data || res;
-                    useCardParkingStore.getState().fetchTickets();
+                    useCarParkingStore.getState().fetchTickets();
                     return newTicket;
                 } catch (err) {
                     console.error('Error creating ticket:', err);
@@ -118,7 +124,7 @@ const useCardParkingStore = create(
                             Api.put(`/card-parking/${id}`, { status: 'returned' })
                         );
                     }
-                    useCardParkingStore.getState().fetchTickets();
+                    useCarParkingStore.getState().fetchTickets();
                     return res;
                 } catch (err) {
                     console.error('Error returning ticket:', err);
@@ -152,4 +158,7 @@ const useCardParkingStore = create(
     )
 );
 
-export default useCardParkingStore;
+const useCardParkingStore = useCarParkingStore;
+
+export { useCarParkingStore, useCardParkingStore };
+export default useCarParkingStore;

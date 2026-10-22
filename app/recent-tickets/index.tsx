@@ -45,7 +45,7 @@ export default function RecentTicketsScreen() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState<'all' | 'parked' | 'returned'>('all');
     const [loading, setLoading] = useState(false);
-    const [cardTickets, setCardTickets] = useState<any[]>([]);
+    const [carTickets, setCarTickets] = useState<any[]>([]);
 
     const storeOrders = valetStore.valet.myOrders || [];
 
@@ -57,15 +57,15 @@ export default function RecentTicketsScreen() {
                 try {
                     const res = await Api.get('/card-parking');
                     const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
-                    setCardTickets(list);
+                    setCarTickets(list);
                 } catch (e) {
-                    console.log('Error fetching card parkings in recent tickets:', e);
+                    console.log('Error fetching car parkings in recent tickets:', e);
                 }
             })()
         ]).finally(() => setLoading(false));
     }, []);
 
-    // Format raw order data & card tickets
+    // Format raw order data & car tickets
     const mappedOrders: TicketItem[] = storeOrders.map((ord: any) => ({
         id: String(ord.id || ord.order_id || Math.random()),
         ticketId: ord.ticket_number || ord.order_id || `VP-${ord.id || ''}`,
@@ -83,7 +83,7 @@ export default function RecentTicketsScreen() {
         duration: 'N/A',
     }));
 
-    const mappedCardTickets: TicketItem[] = cardTickets.map((t: any) => ({
+    const mappedCarTickets: TicketItem[] = carTickets.map((t: any) => ({
         id: String(t.id || t.ticket_no || Math.random()),
         ticketId: t.ticket_no || t.ticket_number || t.ticket_id || `VP-${t.id || ''}`,
         vehicleNumber: t.car_no || t.vehicle_number || 'N/A',
@@ -100,7 +100,7 @@ export default function RecentTicketsScreen() {
         duration: 'N/A',
     }));
 
-    const ticketsList: TicketItem[] = [...mappedCardTickets, ...mappedOrders];
+    const ticketsList: TicketItem[] = [...mappedCarTickets, ...mappedOrders];
 
     // Filter tickets based on search query and status filter
     const filteredTickets = ticketsList.filter((item) => {

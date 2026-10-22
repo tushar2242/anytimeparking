@@ -373,11 +373,11 @@ export default function TicketDetailsScreen() {
 
                     <TouchableOpacity
                         style={[styles.actionBtn, styles.secondaryBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                        onPress={() => router.push('/card-parking' as any)}
+                        onPress={() => router.push({ pathname: '/card-parking/key-return', params: { ticketId: liveTicket?.ticket_no || liveTicket?.ticket_id || id } } as any)}
                         activeOpacity={0.8}
                     >
-                        <Ionicons name="scan-outline" size={18} color="#0066FF" style={{ marginRight: 8 }} />
-                        <Text style={styles.secondaryBtnText}>RETURN KEY</Text>
+                        <Ionicons name="key-outline" size={18} color="#FF851B" style={{ marginRight: 8 }} />
+                        <Text style={[styles.secondaryBtnText, { color: '#FF851B' }]}>RETURN KEY</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>

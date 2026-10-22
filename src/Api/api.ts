@@ -3,7 +3,7 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import { router } from 'expo-router'
 import { showToast } from '../utils/toast'
 
-export const baseURL = process.env.EXPO_PUBLIC_API_URL;
+export const baseURL = process.env.EXPO_PUBLIC_API_URL || "https://valet-api.botsupport.in";
 // console.log('[API] Base URL configured as:', baseURL);
 
 let authReady = false

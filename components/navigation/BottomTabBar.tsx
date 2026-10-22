@@ -10,7 +10,7 @@ export default function BottomTabBar() {
     const isDarkMode = useThemeStore().isDarkMode;
 
     const isDashboardActive = pathname === '/' || pathname === '/home';
-    const isQRActive = pathname.includes('/card-parking');
+    const isQRActive = pathname.includes('/car-parking') || pathname.includes('/card-parking');
     const isOrdersActive = pathname.includes('/my-order');
     const isProfileActive = pathname.includes('/profile');
 

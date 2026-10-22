@@ -23,10 +23,10 @@ export default function MyOrdersPage() {
     const isDarkMode = useThemeStore().isDarkMode
     const router = useRouter()
 
-    const [cardTickets, setCardTickets] = useState<any[]>([]);
+    const [carTickets, setCarTickets] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(false);
 
-    // Fetch orders, transactions, and card tickets on mount
+    // Fetch orders, transactions, and car tickets on mount
     useEffect(() => {
         setLoadingData(true);
         Promise.all([
@@ -37,9 +37,9 @@ export default function MyOrdersPage() {
                 try {
                     const res = await Api.get('/card-parking');
                     const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
-                    setCardTickets(list);
+                    setCarTickets(list);
                 } catch (e) {
-                    console.log('Error loading card parkings in my-orders:', e);
+                    console.log('Error loading car parkings in my-orders:', e);
                 }
             })()
         ]).finally(() => setLoadingData(false));
@@ -120,7 +120,7 @@ export default function MyOrdersPage() {
             vehicle_number: o.vehicle_number || 'N/A',
             time: o.parked_at ? formatTime(o.parked_at) : (o.created_at ? formatTime(o.created_at) : 'N/A')
         })),
-        ...cardTickets.map(t => ({
+        ...carTickets.map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
             time: t.entry_time ? formatTime(t.entry_time) : (t.created_at ? formatTime(t.created_at) : 'N/A')
         }))
@@ -131,7 +131,7 @@ export default function MyOrdersPage() {
             vehicle_number: o.vehicle_number || 'N/A',
             time: o.returned_at ? formatTime(o.returned_at) : 'N/A'
         })),
-        ...cardTickets.filter(t => t.status === 'returned').map(t => ({
+        ...carTickets.filter(t => t.status === 'returned').map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
             time: t.exit_time ? formatTime(t.exit_time) : 'N/A'
         }))
@@ -142,7 +142,7 @@ export default function MyOrdersPage() {
             vehicle_number: o.vehicle_number || 'N/A',
             time: o.parked_at ? formatTime(o.parked_at) : (o.created_at ? formatTime(o.created_at) : 'N/A')
         })),
-        ...cardTickets.filter(t => t.status !== 'returned').map(t => ({
+        ...carTickets.filter(t => t.status !== 'returned').map(t => ({
             vehicle_number: t.car_no || t.vehicle_number || 'N/A',
             time: t.entry_time ? formatTime(t.entry_time) : (t.created_at ? formatTime(t.created_at) : 'N/A')
         }))
