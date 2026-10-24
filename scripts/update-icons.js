@@ -33,17 +33,25 @@ async function run() {
     }
 
     try {
-        const { setSplashImageAsync } = require('@expo/prebuild-config/build/plugins/unversioned/expo-splash-screen/withIosSplashScreen');
-        await setSplashImageAsync(
-            appJson.expo,
-            { image: './assets/images/driverxlogo.png', resizeMode: 'contain', backgroundColor: '#FFFFFF' },
-            projectRoot
-        );
+        const { generateImageAsync } = require('@expo/image-utils');
+        const iosNamedProjectRoot = path.join(projectRoot, 'ios', 'DriverX');
+        const imageSetPath = path.join(iosNamedProjectRoot, 'Images.xcassets', 'SplashScreenLogo.imageset');
+        const imageWidth = 200;
+
+        for (const { ratio, suffix } of [{ ratio: 1, suffix: '' }, { ratio: 2, suffix: '@2x' }, { ratio: 3, suffix: '@3x' }]) {
+            const size = imageWidth * ratio;
+            const { source } = await generateImageAsync(
+                { projectRoot, cacheType: 'splash-ios' },
+                { src: path.join(projectRoot, 'assets/images/driverxlogo.png'), width: size, height: size }
+            );
+            fs.writeFileSync(path.join(imageSetPath, `image${suffix}.png`), source);
+        }
+        console.log('iOS splash screen logo images updated successfully.');
     } catch (e) {
         console.log('Note on iOS splash:', e.message);
     }
 
-    console.log('All icons successfully updated to driverxlogo.png!');
+    console.log('All icons and splash screens successfully updated to driverxlogo.png with white background!');
 }
 
 run().catch((err) => {

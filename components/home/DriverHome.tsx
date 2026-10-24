@@ -64,7 +64,15 @@ export default function DriverHome() {
     const authStore = useAuthStore();
     const currentUser = (authContextUser || authStore.user) as any;
 
-    const driverName = currentUser?.name || currentUser?.phone || 'Valet Staff';
+    const rawDriverName = currentUser?.name || currentUser?.phone || 'Valet Staff';
+    const driverName = rawDriverName
+        ? rawDriverName
+              .toString()
+              .trim()
+              .split(/\s+/)
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ')
+        : 'Valet Staff';
     const driverRole = currentUser?.role
         ? (currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1))
         : 'Valet Driver';
@@ -74,24 +82,22 @@ export default function DriverHome() {
     const [carParkings, setCarParkings] = React.useState<any[]>([]);
 
     useEffect(() => {
-        // Fetch fresh driver orders and user profile on mount
+        // Fetch user profile once on mount
+        authStore.actions.me().catch(() => { });
+
+        // Fetch driver orders and parking list on mount
         const loadHomeData = async () => {
-            valetStore.myOrder(['upcoming', 'running', 'completed', 'accepted', 'booked', 'parked', 'returned', 'cancelled']);
-            authStore.actions.me().catch(() => { });
+            valetStore.myOrder();
             try {
                 const res = await Api.get('/card-parking');
                 const list = res.data || res.tickets || (Array.isArray(res) ? res : []);
                 setCarParkings(list);
             } catch (e) {
-                console.log('Error loading car parkings in home:', e);
+                // Ignore background fetch error
             }
         };
 
         loadHomeData();
-
-        // Real-time synchronization interval
-        const syncInterval = setInterval(loadHomeData, 6000);
-        return () => clearInterval(syncInterval);
     }, []);
 
     // Calculate real dynamic stats directly from user orders and car tickets

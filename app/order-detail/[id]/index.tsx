@@ -306,7 +306,7 @@ export default function OrderDetailPage() {
                 {/* Driver X Image Header */}
                 <View style={{ position: 'relative', width: '100%', height: 270, backgroundColor: isDarkMode ? '#1c1c1e' : '#000', justifyContent: 'center', alignItems: 'center' }}>
                     <Image
-                        source={require('@/assets/images/driver.png')}
+                        source={require('@/assets/images/driverxlogo.png')}
                         style={{ width: '100%', height: '100%' }}
                         resizeMode="contain"
                     />

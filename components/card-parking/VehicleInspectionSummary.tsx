@@ -7,60 +7,67 @@ import { useVehiclePhotosStore } from '@/src/features/cardParking/vehiclePhotos.
 export interface VehicleInspectionSummaryProps {
     title?: string;
     themeColor?: string;
-    photos?: {
-        front?: string | null;
-        rear?: string | null;
-        left?: string | null;
-        right?: string | null;
-    };
+    photos?:
+        | {
+              front?: string | null;
+              rear?: string | null;
+              left?: string | null;
+              right?: string | null;
+          }
+        | (string | null | undefined)[];
 }
 
 export default function VehicleInspectionSummary({
-    title = 'Inspection Photos',
+    title = 'Photos',
     themeColor = '#0066FF',
     photos,
 }: VehicleInspectionSummaryProps = {}) {
     const isDarkMode = useThemeStore().isDarkMode;
     const store = useVehiclePhotosStore();
 
-    const photoFront = photos ? photos.front : store.photoFront;
-    const photoRear = photos ? photos.rear : store.photoRear;
-    const photoLeft = photos ? photos.left : store.photoLeft;
-    const photoRight = photos ? photos.right : store.photoRight;
+    // Extract all valid, captured image URIs
+    let capturedUris: string[] = [];
 
-    const items = [
-        { label: 'Front', uri: photoFront },
-        { label: 'Rear', uri: photoRear },
-        { label: 'Left', uri: photoLeft },
-        { label: 'Right', uri: photoRight },
-    ];
+    if (Array.isArray(photos)) {
+        capturedUris = photos.filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
+    } else if (photos) {
+        capturedUris = [photos.front, photos.rear, photos.left, photos.right].filter(
+            (u): u is string => typeof u === 'string' && u.trim().length > 0
+        );
+    } else {
+        capturedUris = [store.photoFront, store.photoRear, store.photoLeft, store.photoRight].filter(
+            (u): u is string => typeof u === 'string' && u.trim().length > 0
+        );
+    }
 
-    const capturedCount = items.filter((i) => !!i.uri).length;
-    if (capturedCount === 0) {
+    if (capturedUris.length === 0) {
         return null;
     }
+
+    const isSingle = capturedUris.length === 1;
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Ionicons name="shield-checkmark" size={15} color={themeColor} style={{ marginRight: 6 }} />
+                <Ionicons name="camera" size={15} color={themeColor} style={{ marginRight: 6 }} />
                 <Text style={[styles.title, isDarkMode && { color: '#fff' }]}>
-                    {title} ({capturedCount}/4)
+                    {title} {capturedUris.length > 1 ? `(${capturedUris.length})` : ''}
                 </Text>
             </View>
-            <View style={styles.photosRow}>
-                {items.map((item, idx) => (
-                    <View key={idx} style={styles.photoItem}>
-                        {item.uri ? (
-                            <Image source={{ uri: item.uri }} style={styles.photoThumb} />
-                        ) : (
-                            <View style={[styles.photoEmpty, isDarkMode && { backgroundColor: '#2C2C2E' }]}>
-                                <Ionicons name="image-outline" size={16} color="#8E8E93" />
-                            </View>
-                        )}
-                        <Text style={[styles.photoLabel, isDarkMode && { color: '#8E8E93' }]}>
-                            {item.label}
-                        </Text>
+            <View style={[styles.photosRow, isSingle && styles.singlePhotoRow]}>
+                {capturedUris.map((uri, idx) => (
+                    <View
+                        key={idx}
+                        style={[
+                            styles.photoItem,
+                            isSingle ? styles.singlePhotoItem : capturedUris.length === 2 ? styles.halfPhotoItem : styles.multiPhotoItem,
+                        ]}
+                    >
+                        <Image
+                            source={{ uri }}
+                            style={[styles.photoThumb, isSingle && styles.singlePhotoThumb]}
+                            resizeMode="cover"
+                        />
                     </View>
                 ))}
             </View>
@@ -89,31 +96,35 @@ const styles = StyleSheet.create({
     },
     photosRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    singlePhotoRow: {
+        justifyContent: 'center',
     },
     photoItem: {
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    singlePhotoItem: {
+        width: '100%',
+        maxWidth: 240,
+    },
+    halfPhotoItem: {
+        flex: 1,
+        minWidth: '46%',
+    },
+    multiPhotoItem: {
         width: '23%',
-        alignItems: 'center',
+        minWidth: 64,
     },
     photoThumb: {
         width: '100%',
-        height: 52,
+        height: 64,
         borderRadius: 8,
         backgroundColor: '#F2F2F7',
     },
-    photoEmpty: {
-        width: '100%',
-        height: 52,
-        borderRadius: 8,
-        backgroundColor: '#F2F2F7',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    photoLabel: {
-        fontSize: 9,
-        color: '#8E8E93',
-        fontWeight: '600',
-        marginTop: 3,
-        textAlign: 'center',
+    singlePhotoThumb: {
+        height: 120,
     },
 });

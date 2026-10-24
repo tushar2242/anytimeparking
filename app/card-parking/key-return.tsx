@@ -351,7 +351,7 @@ export default function KeyReturnScreen() {
         } finally {
             setIsReturning(false);
             setExitTime(currentTime);
-            setStep(4);
+            setStep(3);
         }
     };
 
@@ -403,7 +403,6 @@ export default function KeyReturnScreen() {
             { label: 'Parking Status', value: 'RETURNED' },
             { label: 'Check-In Time', value: foundTicket.entryTime },
             { label: 'Exit Time', value: exitTime },
-            { label: 'Fuel Handover', value: fuelLevel },
         ];
 
         await exportImageToPdf(qrUri, 'Valet Parking Return Receipt', details);
@@ -463,7 +462,7 @@ export default function KeyReturnScreen() {
                         style={styles.headerIconButton}
                         activeOpacity={0.7}
                     >
-                        {step > 1 && step < 4 ? (
+                        {step > 1 && step < 3 ? (
                             <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
                         ) : (
                             <Ionicons name="menu" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
@@ -512,8 +511,7 @@ export default function KeyReturnScreen() {
                     {[
                         { stepNum: 1, label: 'Locate Ticket', icon: 'scan' },
                         { stepNum: 2, label: 'Vehicle Verify', icon: 'shield-checkmark' },
-                        { stepNum: 3, label: 'Re-Inspection', icon: 'camera' },
-                        { stepNum: 4, label: 'Returned', icon: 'checkmark-circle' },
+                        { stepNum: 3, label: 'Returned', icon: 'checkmark-circle' },
                     ].map((item) => {
                         const isCompleted = item.stepNum < step;
                         const isActive = item.stepNum === step;
@@ -523,7 +521,7 @@ export default function KeyReturnScreen() {
                                 key={item.stepNum}
                                 style={styles.stepItemWrapper}
                                 onPress={() => {
-                                    if (item.stepNum < step || (step === 4 && item.stepNum === 4)) {
+                                    if (item.stepNum < step || (step === 3 && item.stepNum === 3)) {
                                         setStep(item.stepNum);
                                     }
                                 }}
@@ -838,12 +836,19 @@ export default function KeyReturnScreen() {
                                 {/* Action Buttons */}
                                 <View style={styles.actionButtonsRow}>
                                     <TouchableOpacity
-                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }]}
-                                        onPress={() => setStep(3)}
+                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }, isReturning && { opacity: 0.8 }]}
+                                        onPress={handleConfirmReturn}
+                                        disabled={isReturning}
                                         activeOpacity={0.85}
                                     >
-                                        <Ionicons name="checkmark-done-circle" size={18} color="#fff" style={{ marginRight: 6 }} />
-                                        <Text style={styles.returnVehicleBtnText}>PROCEED TO HANDOVER</Text>
+                                        {isReturning ? (
+                                            <ActivityIndicator color="#fff" />
+                                        ) : (
+                                            <>
+                                                <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 6 }} />
+                                                <Text style={styles.returnVehicleBtnText}>COMPLETE HANDOVER & RETURN VEHICLE</Text>
+                                            </>
+                                        )}
                                     </TouchableOpacity>
 
                                     <TouchableOpacity
@@ -860,152 +865,9 @@ export default function KeyReturnScreen() {
                     )}
 
                     {/* ==================================================== */}
-                    {/* STEP 3: RE-INSPECTION & HANDOVER CHECKLIST */}
+                    {/* STEP 3: STATUS RETURNED & FINAL RECEIPT */}
                     {/* ==================================================== */}
                     {step === 3 && (
-                        <View style={styles.innerContent}>
-                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formScrollContainer}>
-                                <Text style={[styles.sectionHeading, isDarkMode && { color: '#fff' }]}>
-                                    Departure Re-Inspection Photos
-                                </Text>
-                                <Text style={styles.sectionSubtitle}>
-                                    Record vehicle return condition to prevent damage disputes
-                                </Text>
-
-                                {/* 4-angle Departure Photo Grid */}
-                                <View style={[styles.photoGrid, { marginTop: 12 }]}>
-                                    {[
-                                        { slot: 'front' as const, label: 'Front Return', uri: returnPhotoFront, setter: setReturnPhotoFront },
-                                        { slot: 'rear' as const, label: 'Rear Return', uri: returnPhotoRear, setter: setReturnPhotoRear },
-                                        { slot: 'left' as const, label: 'Left Return', uri: returnPhotoLeft, setter: setReturnPhotoLeft },
-                                        { slot: 'right' as const, label: 'Right Return', uri: returnPhotoRight, setter: setReturnPhotoRight },
-                                    ].map((item) => (
-                                        <TouchableOpacity
-                                            key={item.slot}
-                                            style={[
-                                                styles.photoGridItem,
-                                                item.uri !== null && { borderColor: '#34C759' },
-                                                isDarkMode && { backgroundColor: '#1C1C1E', borderColor: item.uri ? '#34C759' : '#2C2C2E' },
-                                            ]}
-                                            onPress={() => setActiveReturnPhotoSlot(item.slot)}
-                                            activeOpacity={0.8}
-                                        >
-                                            {item.uri ? (
-                                                <Image source={{ uri: item.uri }} style={styles.capturedPhotoThumbnail} />
-                                            ) : (
-                                                <View style={styles.photoPlaceholder}>
-                                                    <Ionicons name="camera-outline" size={22} color="#8E8E93" />
-                                                    <Text style={styles.photoPlaceholderLabel}>{item.label}</Text>
-                                                </View>
-                                            )}
-                                            {item.uri && (
-                                                <TouchableOpacity
-                                                    style={styles.photoRemoveBadge}
-                                                    onPress={(e) => {
-                                                        e.stopPropagation();
-                                                        item.setter(null);
-                                                    }}
-                                                >
-                                                    <Ionicons name="close" size={12} color="#fff" />
-                                                </TouchableOpacity>
-                                            )}
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-
-                                {/* Fuel Gauge Selector */}
-                                <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }, { marginTop: 14 }]}>
-                                    Fuel Level at Handover
-                                </Text>
-                                <View style={styles.fuelContainer}>
-                                    {['E', '1/4', '1/2', '3/4', 'Full'].map((lvl) => (
-                                        <TouchableOpacity
-                                            key={lvl}
-                                            style={[
-                                                styles.fuelButton,
-                                                fuelLevel === lvl && { backgroundColor: themeColor, borderColor: themeColor },
-                                                isDarkMode && fuelLevel !== lvl && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' },
-                                            ]}
-                                            onPress={() => setFuelLevel(lvl)}
-                                        >
-                                            <Text
-                                                style={[
-                                                    styles.fuelButtonText,
-                                                    fuelLevel === lvl && { color: '#fff' },
-                                                    isDarkMode && fuelLevel !== lvl && { color: '#fff' },
-                                                ]}
-                                            >
-                                                {lvl}
-                                            </Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-
-                                {/* Condition / Damage Checkbox */}
-                                <TouchableOpacity
-                                    style={[
-                                        styles.damageVerifyBox,
-                                        noDamageVerified && { borderColor: '#34C759', backgroundColor: isDarkMode ? '#14281E' : '#E8F8EE' },
-                                        isDarkMode && !noDamageVerified && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' },
-                                    ]}
-                                    onPress={() => setNoDamageVerified(!noDamageVerified)}
-                                    activeOpacity={0.8}
-                                >
-                                    <Ionicons
-                                        name={noDamageVerified ? "checkbox" : "square-outline"}
-                                        size={22}
-                                        color={noDamageVerified ? "#34C759" : "#8E8E93"}
-                                    />
-                                    <View style={{ flex: 1, marginLeft: 10 }}>
-                                        <Text style={[styles.damageVerifyTitle, isDarkMode && { color: '#fff' }]}>
-                                            Vehicle inspected with customer
-                                        </Text>
-                                        <Text style={styles.damageVerifySubtitle}>
-                                            No new damages, scratches, or missing items reported
-                                        </Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                {/* Attendant Notes */}
-                                <View style={[styles.formInputGroup, { marginTop: 12 }]}>
-                                    <Text style={[styles.formInputLabel, isDarkMode && { color: '#fff' }]}>Handover Remarks / Notes</Text>
-                                    <TextInput
-                                        style={[
-                                            styles.multilineTextInput,
-                                            isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E', color: '#fff' },
-                                        ]}
-                                        placeholder="Optional handover remarks or key notes..."
-                                        placeholderTextColor="#8E8E93"
-                                        value={returnNotes}
-                                        onChangeText={setReturnNotes}
-                                        multiline={true}
-                                        numberOfLines={3}
-                                    />
-                                </View>
-                            </ScrollView>
-
-                            <TouchableOpacity
-                                style={[styles.continueButton, { backgroundColor: themeColor }, isReturning && { opacity: 0.8 }]}
-                                onPress={handleConfirmReturn}
-                                disabled={isReturning}
-                                activeOpacity={0.85}
-                            >
-                                {isReturning ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <>
-                                        <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 6 }} />
-                                        <Text style={styles.continueButtonText}>COMPLETE HANDOVER & RETURN VEHICLE</Text>
-                                    </>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
-                    {/* ==================================================== */}
-                    {/* STEP 4: STATUS RETURNED & FINAL RECEIPT */}
-                    {/* ==================================================== */}
-                    {step === 4 && (
                         <View style={styles.innerContent}>
                             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.ticketScrollContainer}>
                                 {/* Animated Concentric Checkmark Ring */}
@@ -1045,54 +907,41 @@ export default function KeyReturnScreen() {
                                         <Text style={styles.ticketDetailLabel}>Check-Out Time</Text>
                                         <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{exitTime}</Text>
                                     </View>
-                                    <View style={styles.ticketDetailRow}>
-                                        <Text style={styles.ticketDetailLabel}>Fuel Level Handed</Text>
-                                        <Text style={[styles.ticketDetailValue, { color: themeColor }]}>{fuelLevel}</Text>
-                                    </View>
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Parking Status</Text>
-                                        <Text style={[styles.ticketDetailValue, { color: '#34C759' }]}>CLOSED & COMPLETED</Text>
+                                        <Text style={[styles.ticketDetailValue, { color: '#34C759' }]}>Return Confirmed</Text>
                                     </View>
                                 </View>
-
+                                <TouchableOpacity style={styles.whatsappButton} onPress={sendWhatsAppReceipt} activeOpacity={0.85}>
+                                    <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.whatsappButtonText}>SEND RECEIPT ON WHATSAPP</Text>
+                                </TouchableOpacity>
                                 {/* Action Buttons Row */}
                                 <View style={styles.actionButtonsRow}>
-                                    <TouchableOpacity
-                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }]}
-                                        onPress={handleViewReceipt}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Ionicons name="document-text-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
-                                        <Text style={styles.returnVehicleBtnText}>VIEW RECEIPT</Text>
-                                    </TouchableOpacity>
-
                                     <TouchableOpacity
                                         style={[styles.cancelRequestBtn, { borderColor: themeColor, backgroundColor: themeColorLight }]}
                                         onPress={handleSavePdfReceipt}
                                         activeOpacity={0.8}
                                     >
-                                        <Ionicons name="download-outline" size={18} color={themeColor} style={{ marginRight: 4 }} />
+                                        <Ionicons name="download-outline" size={18} color={themeColor} style={{ marginRight: 6 }} />
                                         <Text style={[styles.cancelRequestBtnText, { color: themeColor }]}>PDF RECEIPT</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }]}
+                                        onPress={resetWorkflow}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="checkmark-done" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
+                                        <Text style={styles.returnVehicleBtnText}>DONE</Text>
                                     </TouchableOpacity>
                                 </View>
 
                                 {/* WhatsApp Share */}
-                                <TouchableOpacity style={styles.whatsappButton} onPress={sendWhatsAppReceipt} activeOpacity={0.85}>
-                                    <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={styles.whatsappButtonText}>SEND RECEIPT ON WHATSAPP</Text>
-                                </TouchableOpacity>
 
-                                {/* Done Reset Button */}
-                                <TouchableOpacity
-                                    style={[styles.doneResetButtonStyled, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                                    onPress={resetWorkflow}
-                                    activeOpacity={0.8}
-                                >
-                                    <Ionicons name="checkmark-done-circle-outline" size={20} color={themeColor} style={{ marginRight: 6 }} />
-                                    <Text style={[styles.doneResetButtonStyledText, isDarkMode && { color: '#fff' }]}>
-                                        DONE / PROCESS NEXT KEY RETURN
-                                    </Text>
-                                </TouchableOpacity>
+
+
                             </ScrollView>
                         </View>
                     )}
@@ -1562,7 +1411,7 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     returnVehicleBtn: {
-        flex: 1.2,
+        flex: 1,
         height: 50,
         borderRadius: 14,
         flexDirection: 'row',
@@ -1570,18 +1419,18 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.15,
         shadowRadius: 6,
         elevation: 3,
     },
     returnVehicleBtnText: {
         color: '#FFFFFF',
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '800',
         letterSpacing: 0.5,
     },
     cancelRequestBtn: {
-        flex: 0.8,
+        flex: 1,
         height: 50,
         borderRadius: 14,
         flexDirection: 'row',
@@ -1593,7 +1442,7 @@ const styles = StyleSheet.create({
     },
     cancelRequestBtnText: {
         color: '#FF3B30',
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: '700',
     },
     photoGrid: {
