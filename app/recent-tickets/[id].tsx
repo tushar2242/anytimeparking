@@ -88,7 +88,7 @@ export default function TicketDetailsScreen() {
         ownerName: custName,
         phone: custPhone,
         parkingSite: pSite,
-        attendedBy: liveTicket?.driver?.name || liveTicket?.attended_by || 'Valet Driver',
+        // attendedBy: liveTicket?.driver?.name || liveTicket?.attended_by || 'Valet Driver',
         entryTime: reqAt,
         exitTime: exitT,
         keyTagNumber: liveTicket?.key_slot ? `KEY-${liveTicket.key_slot}` : `KEY-BOX-${String(id || '').slice(-4).toUpperCase()}`,
@@ -182,7 +182,37 @@ export default function TicketDetailsScreen() {
         return (
             <LayoutWrapper>
                 <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
+                    <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+                    <View style={[styles.topNavbar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
+                        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                            <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
+                        </TouchableOpacity>
+                        <Text style={[styles.navTitle, isDarkMode && { color: '#fff' }]}>Ticket Details</Text>
+                        <View style={{ width: 36 }} />
+                    </View>
+                    <View style={styles.centerContainer}>
+                        <Ionicons name="alert-circle-outline" size={54} color="#8E8E93" style={{ marginBottom: 12 }} />
+                        <Text style={[styles.emptyTitle, isDarkMode && { color: '#fff' }]}>Ticket Not Found</Text>
+                        <Text style={styles.emptySubText}>Could not find details for ticket #{String(id)}.</Text>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, styles.secondaryBtn, { marginTop: 20, paddingHorizontal: 24 }]}
+                            onPress={() => router.back()}
+                        >
+                            <Text style={styles.secondaryBtnText}>GO BACK</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <BottomTabBar />
+                </View>
+            </LayoutWrapper>
+        );
+    }
+
+    return (
+        <LayoutWrapper>
+            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
                 <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+
+                {/* Top Navbar */}
                 <View style={[styles.topNavbar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
@@ -190,201 +220,171 @@ export default function TicketDetailsScreen() {
                     <Text style={[styles.navTitle, isDarkMode && { color: '#fff' }]}>Ticket Details</Text>
                     <View style={{ width: 36 }} />
                 </View>
-                <View style={styles.centerContainer}>
-                    <Ionicons name="alert-circle-outline" size={54} color="#8E8E93" style={{ marginBottom: 12 }} />
-                    <Text style={[styles.emptyTitle, isDarkMode && { color: '#fff' }]}>Ticket Not Found</Text>
-                    <Text style={styles.emptySubText}>Could not find details for ticket #{String(id)}.</Text>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, styles.secondaryBtn, { marginTop: 20, paddingHorizontal: 24 }]}
-                        onPress={() => router.back()}
-                    >
-                        <Text style={styles.secondaryBtnText}>GO BACK</Text>
-                    </TouchableOpacity>
-                </View>
-                <BottomTabBar />
-            </View>
-        </LayoutWrapper>
-    );
-    }
 
-    return (
-        <LayoutWrapper>
-            <View style={[styles.container, { backgroundColor: isDarkMode ? '#121212' : '#F5F7FB' }]}>
-            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-            {/* Top Navbar */}
-            <View style={[styles.topNavbar, { paddingTop: headerPaddingTop, borderBottomColor: isDarkMode ? '#2C2C2E' : '#E5E9F0' }]}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color={isDarkMode ? '#fff' : '#1C1C1E'} />
-                </TouchableOpacity>
-                <Text style={[styles.navTitle, isDarkMode && { color: '#fff' }]}>Ticket Details</Text>
-                <View style={{ width: 36 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-                {/* Main Status Header Card */}
-                <View style={[styles.statusHeaderCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                    <View style={styles.statusBadgeRow}>
-                        <View style={styles.ticketIdPill}>
-                            <Ionicons name="receipt" size={16} color="#0066FF" style={{ marginRight: 6 }} />
-                            <Text style={styles.ticketIdPillText}>{ticketData.ticketId}</Text>
-                        </View>
-                        <View
-                            style={[
-                                styles.statusBadge,
-                                isRet
-                                    ? { backgroundColor: 'rgba(52, 199, 89, 0.15)' }
-                                    : { backgroundColor: 'rgba(255, 133, 27, 0.15)' },
-                            ]}
-                        >
-                            <Text
+                    {/* Main Status Header Card */}
+                    <View style={[styles.statusHeaderCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                        <View style={styles.statusBadgeRow}>
+                            <View style={styles.ticketIdPill}>
+                                <Ionicons name="receipt" size={16} color="#0066FF" style={{ marginRight: 6 }} />
+                                <Text style={styles.ticketIdPillText}>{ticketData.ticketId}</Text>
+                            </View>
+                            <View
                                 style={[
-                                    styles.statusBadgeText,
-                                    isRet ? { color: '#34C759' } : { color: '#FF851B' },
+                                    styles.statusBadge,
+                                    isRet
+                                        ? { backgroundColor: 'rgba(52, 199, 89, 0.15)' }
+                                        : { backgroundColor: 'rgba(255, 133, 27, 0.15)' },
                                 ]}
                             >
-                                {isRet ? 'RETURNED' : 'ACTIVE PARKED'}
-                            </Text>
+                                <Text
+                                    style={[
+                                        styles.statusBadgeText,
+                                        isRet ? { color: '#34C759' } : { color: '#FF851B' },
+                                    ]}
+                                >
+                                    {isRet ? 'RETURNED' : 'ACTIVE PARKED'}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <Text style={[styles.vehicleTitle, isDarkMode && { color: '#fff' }]}>
+                            {ticketData.vehicleNumber}
+                        </Text>
+                        <Text style={styles.vehicleSubtitle}>
+                            {ticketData.vehicleModel} • {ticketData.vehicleColor}
+                        </Text>
+                    </View>
+
+                    {/* Section 1: Ticket Generation Details */}
+                    <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Ionicons name="document-text-outline" size={20} color="#0066FF" style={{ marginRight: 8 }} />
+                            <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Ticket Generation Info</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Customer Name</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.ownerName}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Phone Number</Text>
+                            <Text style={[styles.detailValue, { color: '#0066FF', fontWeight: '700' }]}>{ticketData.phone}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Parking Location</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.parkingSite}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Entry Time</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.entryTime}</Text>
+                        </View>
+
+                        {/* <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Attended By</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.attendedBy}</Text>
+                        </View> */}
+
+                        {/* Initial Inspection Checklist */}
+                        <Text style={[styles.subSectionTitle, isDarkMode && { color: '#fff' }]}>Photos</Text>
+                        <View style={styles.photoChipsRow}>
+                            {ticketData.inspectionPhotos.map((photo, idx) => (
+                                <View key={idx} style={[styles.photoChip, isDarkMode && { backgroundColor: '#2C2C2E' }]}>
+                                    <Ionicons name="checkmark-circle" size={16} color="#34C759" style={{ marginRight: 6 }} />
+                                    <Text style={[styles.photoChipText, isDarkMode && { color: '#fff' }]}>{photo.label}</Text>
+                                </View>
+                            ))}
                         </View>
                     </View>
 
-                    <Text style={[styles.vehicleTitle, isDarkMode && { color: '#fff' }]}>
-                        {ticketData.vehicleNumber}
-                    </Text>
-                    <Text style={styles.vehicleSubtitle}>
-                        {ticketData.vehicleModel} • {ticketData.vehicleColor}
-                    </Text>
-                </View>
+                    {/* Section 2: Key Generation & Handover Details */}
+                    <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Ionicons name="key-outline" size={20} color="#FF851B" style={{ marginRight: 8 }} />
+                            <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Key Generation</Text>
+                        </View>
 
-                {/* Section 1: Ticket Generation Details */}
-                <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Ionicons name="document-text-outline" size={20} color="#0066FF" style={{ marginRight: 8 }} />
-                        <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Ticket Generation Info</Text>
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Key Tag Code</Text>
+                            <Text style={[styles.detailValue, { color: '#FF851B', fontWeight: '800' }]}>{ticketData.keyTagNumber}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Key Slot Location</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.keySlotLocation}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Key Storage Status</Text>
+                            <Text style={[styles.detailValue, { color: '#34C759', fontWeight: '700' }]}>{ticketData.keyHandoverStatus}</Text>
+                        </View>
+
+                        <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Key Tagged At</Text>
+                            <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.keyGeneratedAt}</Text>
+                        </View>
                     </View>
 
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Customer Name</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.ownerName}</Text>
+                    {/* Section 3: Customer Web Portal */}
+                    <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
+                        <View style={styles.sectionHeaderRow}>
+                            <Ionicons name="globe-outline" size={20} color="#0066FF" style={{ marginRight: 8 }} />
+                            <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Ticket Public Url</Text>
+                        </View>
+
+                        <Text style={[styles.webUrlLabel, isDarkMode && { color: '#64D2FF' }]} numberOfLines={1}>
+                            {ticketWebUrl}
+                        </Text>
+
+                        <View style={styles.webBtnRow}>
+                            <TouchableOpacity
+                                style={styles.openWebBtn}
+                                onPress={openTicketWebsite}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="open-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                                <Text style={styles.openWebBtnText}>VIEW TICKET ON WEBSITE</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.shareWebBtn, isDarkMode && { backgroundColor: '#2C2C2E', borderColor: '#3A3A3C' }]}
+                                onPress={shareTicketLink}
+                                activeOpacity={0.8}
+                            >
+                                <Ionicons name="share-social-outline" size={17} color={isDarkMode ? '#fff' : '#0066FF'} />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Phone Number</Text>
-                        <Text style={[styles.detailValue, { color: '#0066FF', fontWeight: '700' }]}>{ticketData.phone}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Parking Location</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.parkingSite}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Entry Time</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.entryTime}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Attended By</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.attendedBy}</Text>
-                    </View>
-
-                    {/* Initial Inspection Checklist */}
-                    <Text style={[styles.subSectionTitle, isDarkMode && { color: '#fff' }]}>Vehicle Inspection Photos</Text>
-                    <View style={styles.photoChipsRow}>
-                        {ticketData.inspectionPhotos.map((photo, idx) => (
-                            <View key={idx} style={[styles.photoChip, isDarkMode && { backgroundColor: '#2C2C2E' }]}>
-                                <Ionicons name="checkmark-circle" size={16} color="#34C759" style={{ marginRight: 6 }} />
-                                <Text style={[styles.photoChipText, isDarkMode && { color: '#fff' }]}>{photo.label}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-
-                {/* Section 2: Key Generation & Handover Details */}
-                <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Ionicons name="key-outline" size={20} color="#FF851B" style={{ marginRight: 8 }} />
-                        <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Key Storage & Generation</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Key Tag Code</Text>
-                        <Text style={[styles.detailValue, { color: '#FF851B', fontWeight: '800' }]}>{ticketData.keyTagNumber}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Key Slot Location</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.keySlotLocation}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Key Storage Status</Text>
-                        <Text style={[styles.detailValue, { color: '#34C759', fontWeight: '700' }]}>{ticketData.keyHandoverStatus}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Key Tagged At</Text>
-                        <Text style={[styles.detailValue, isDarkMode && { color: '#fff' }]}>{ticketData.keyGeneratedAt}</Text>
-                    </View>
-                </View>
-
-                {/* Section 3: Customer Web Portal */}
-                <View style={[styles.sectionCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Ionicons name="globe-outline" size={20} color="#0066FF" style={{ marginRight: 8 }} />
-                        <Text style={[styles.sectionTitle, isDarkMode && { color: '#fff' }]}>Customer Ticket Portal</Text>
-                    </View>
-
-                    <Text style={[styles.webUrlLabel, isDarkMode && { color: '#64D2FF' }]} numberOfLines={1}>
-                        {ticketWebUrl}
-                    </Text>
-
-                    <View style={styles.webBtnRow}>
+                    {/* Action Buttons Row */}
+                    <View style={styles.actionButtonsRow}>
                         <TouchableOpacity
-                            style={styles.openWebBtn}
-                            onPress={openTicketWebsite}
+                            style={[styles.actionBtn, styles.primaryBtn]}
+                            onPress={handleShareWhatsApp}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="open-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
-                            <Text style={styles.openWebBtnText}>VIEW TICKET ON WEBSITE</Text>
+                            <Ionicons name="logo-whatsapp" size={18} color="#fff" style={{ marginRight: 8 }} />
+                            <Text style={styles.primaryBtnText}>SHARE TICKET</Text>
                         </TouchableOpacity>
-
+                        {/* 
                         <TouchableOpacity
-                            style={[styles.shareWebBtn, isDarkMode && { backgroundColor: '#2C2C2E', borderColor: '#3A3A3C' }]}
-                            onPress={shareTicketLink}
+                            style={[styles.actionBtn, styles.secondaryBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
+                            onPress={() => router.push({ pathname: '/card-parking/key-return', params: { ticketId: liveTicket?.ticket_no || liveTicket?.ticket_id || id } } as any)}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="share-social-outline" size={17} color={isDarkMode ? '#fff' : '#0066FF'} />
-                        </TouchableOpacity>
+                            <Ionicons name="key-outline" size={18} color="#FF851B" style={{ marginRight: 8 }} />
+                            <Text style={[styles.secondaryBtnText, { color: '#FF851B' }]}>RETURN KEY</Text>
+                        </TouchableOpacity> */}
                     </View>
-                </View>
+                </ScrollView>
 
-                {/* Action Buttons Row */}
-                <View style={styles.actionButtonsRow}>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, styles.primaryBtn]}
-                        onPress={handleShareWhatsApp}
-                        activeOpacity={0.8}
-                    >
-                        <Ionicons name="logo-whatsapp" size={18} color="#fff" style={{ marginRight: 8 }} />
-                        <Text style={styles.primaryBtnText}>SHARE TICKET</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.actionBtn, styles.secondaryBtn, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}
-                        onPress={() => router.push({ pathname: '/card-parking/key-return', params: { ticketId: liveTicket?.ticket_no || liveTicket?.ticket_id || id } } as any)}
-                        activeOpacity={0.8}
-                    >
-                        <Ionicons name="key-outline" size={18} color="#FF851B" style={{ marginRight: 8 }} />
-                        <Text style={[styles.secondaryBtnText, { color: '#FF851B' }]}>RETURN KEY</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-
-            {/* Bottom Navigation Tab Bar */}
-            <BottomTabBar />
-        </View>
+                {/* Bottom Navigation Tab Bar */}
+                <BottomTabBar />
+            </View>
         </LayoutWrapper>
     );
 }

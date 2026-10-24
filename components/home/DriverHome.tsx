@@ -67,11 +67,11 @@ export default function DriverHome() {
     const rawDriverName = currentUser?.name || currentUser?.phone || 'Valet Staff';
     const driverName = rawDriverName
         ? rawDriverName
-              .toString()
-              .trim()
-              .split(/\s+/)
-              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ')
+            .toString()
+            .trim()
+            .split(/\s+/)
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
         : 'Valet Staff';
     const driverRole = currentUser?.role
         ? (currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1))
@@ -148,7 +148,7 @@ export default function DriverHome() {
                     </View>
                 </View>
                 <View style={styles.headerRight}>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         activeOpacity={0.8}
                         style={[styles.circleButton, {
                             backgroundColor: isDarkMode ? '#1C1C1E' : '#FFFFFF',
@@ -156,7 +156,7 @@ export default function DriverHome() {
                         }]}
                     >
                         <Feather name="search" size={20} color={isDarkMode ? '#FFFFFF' : '#1C1C1E'} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     {/* <TouchableOpacity
                         activeOpacity={0.8}
                         style={[styles.circleButton, {

@@ -12,6 +12,7 @@ import {
     StatusBar,
     Dimensions,
     BackHandler,
+    Image,
 } from 'react-native'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
@@ -87,11 +88,11 @@ export default function LoginScreen() {
                 >
                     <View style={styles.logoWrapper}>
                         <View style={styles.logoCircle}>
-                            <View style={styles.carLogoOutline}>
-                                <Ionicons name="car-sport-outline" size={44} color="#0A84FF" />
-                            </View>
-                            <Text style={styles.logoValetText}>VALET</Text>
-                            <Text style={styles.logoParkingText}>PARKING</Text>
+                            <Image
+                                source={require('@/assets/images/driverxlogo.png')}
+                                style={styles.logoImage}
+                                resizeMode="contain"
+                            />
                         </View>
                     </View>
                 </LinearGradient>
@@ -137,9 +138,9 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Forgot Password */}
-                    <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/forgot' as any)}>
+                    {/* <TouchableOpacity style={styles.forgotPassword} onPress={() => router.push('/forgot' as any)}>
                         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     {/* Action Buttons */}
                     <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
@@ -150,11 +151,11 @@ export default function LoginScreen() {
                         )}
                     </TouchableOpacity>
 
-                    <Text style={styles.orText}>OR</Text>
+                    {/* <Text style={styles.orText}>OR</Text> */}
 
-                    <TouchableOpacity style={styles.signUpButton} onPress={() => router.push('/sign-up' as any)}>
+                    {/* <TouchableOpacity style={styles.signUpButton} onPress={() => router.push('/sign-up' as any)}>
                         <Text style={styles.signUpButtonText}>CREATE AN ACCOUNT</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     <Text style={styles.versionText}>v1.0.0</Text>
                 </View>
@@ -187,35 +188,23 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     logoCircle: {
-        width: 140,
-        height: 140,
-        borderRadius: 70,
-        borderWidth: 2,
-        borderColor: '#0A84FF',
-        backgroundColor: 'rgba(7, 19, 37, 0.85)',
+        width: 130,
+        height: 130,
+        borderRadius: 65,
+        backgroundColor: '#FFFFFF',
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#0A84FF',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowRadius: 10,
         elevation: 6,
+        overflow: 'hidden',
+        padding: 12,
     },
-    carLogoOutline: {
-        marginBottom: 4,
-    },
-    logoValetText: {
-        fontSize: 18,
-        fontWeight: '900',
-        color: '#0A84FF',
-        letterSpacing: 2,
-    },
-    logoParkingText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: '#fff',
-        letterSpacing: 4,
-        marginTop: 2,
+    logoImage: {
+        width: '100%',
+        height: '100%',
     },
     contentPanel: {
         flex: 1,
