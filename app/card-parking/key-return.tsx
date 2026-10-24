@@ -13,6 +13,7 @@ import {
     Share,
     Linking,
     StatusBar,
+    Platform,
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -774,91 +775,141 @@ export default function KeyReturnScreen() {
                         <View style={styles.innerContent}>
                             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.ticketScrollContainer}>
                                 {/* Vehicle Banner Card */}
-                                <View style={styles.vehicleImageBannerCard}>
-                                    <Image
-                                        source={{
-                                            uri: foundTicket.photo || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=800'
-                                        }}
-                                        style={styles.vehicleBannerImage}
-                                        resizeMode="cover"
-                                    />
-                                    <View style={[styles.vehicleBannerBadge, { backgroundColor: themeColor }]}>
-                                        <Ionicons name="car-sport" size={14} color="#fff" style={{ marginRight: 4 }} />
-                                        <Text style={styles.vehicleBannerBadgeText}>{foundTicket.vehicleNumber || 'VEHICLE'}</Text>
-                                    </View>
-                                </View>
 
-                                <View style={[styles.acceptVerifyBadge, { backgroundColor: themeColorLight }]}>
-                                    <Ionicons name="shield-checkmark" size={16} color={themeColor} style={{ marginRight: 6 }} />
+
+                                {/* Verification Notice Banner */}
+                                {/* <View style={[styles.acceptVerifyBadge, { backgroundColor: themeColorLight, borderColor: themeColor, borderWidth: 1 }]}>
+                                    <Ionicons name="shield-checkmark" size={18} color={themeColor} style={{ marginRight: 8 }} />
                                     <Text style={[styles.acceptVerifyBadgeText, { color: themeColor }]}>
                                         Customer pickup requested • Verify details before key release
                                     </Text>
-                                </View>
+                                </View> */}
 
                                 {/* Ticket Details Card */}
                                 <View style={[styles.ticketCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Ticket ID</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.ticketId}</Text>
+                                        <Text style={[styles.ticketDetailValue, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', letterSpacing: 0.5 }, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.ticketId}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>License Plate</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.vehicleNumber}</Text>
+                                        <Text style={[styles.ticketDetailValue, { fontWeight: '900', letterSpacing: 1 }, isDarkMode && { color: '#fff' }]}>
+                                            {(foundTicket.vehicleNumber || '').toUpperCase()}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Vehicle Model</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.vehicleType}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.vehicleType || 'N/A'}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Customer Name</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.ownerName}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.ownerName
+                                                ? foundTicket.ownerName
+                                                    .toString()
+                                                    .split(/\s+/)
+                                                    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                                                    .join(' ')
+                                                : 'Customer'}
+                                        </Text>
                                     </View>
+
                                     {foundTicket.phone ? (
-                                        <View style={styles.ticketDetailRow}>
-                                            <Text style={styles.ticketDetailLabel}>Phone Number</Text>
-                                            <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.phone}</Text>
-                                        </View>
+                                        <>
+                                            <View style={styles.ticketDetailDivider} />
+                                            <View style={styles.ticketDetailRow}>
+                                                <Text style={styles.ticketDetailLabel}>Phone Number</Text>
+                                                <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                                    {foundTicket.phone}
+                                                </Text>
+                                            </View>
+                                        </>
                                     ) : null}
+
+                                    <View style={styles.ticketDetailDivider} />
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Assigned Key Slot</Text>
-                                        <Text style={[styles.ticketDetailValue, { color: themeColor }]}>{foundTicket.keySlot || 'Bay A-12'}</Text>
+                                        <View style={[styles.keySlotBadge, { backgroundColor: themeColorLight, borderColor: themeColor }]}>
+                                            <Ionicons name="key" size={13} color={themeColor} style={{ marginRight: 4 }} />
+                                            <Text style={[styles.keySlotBadgeText, { color: themeColor }]}>
+                                                {foundTicket.keySlot || 'Bay A-12'}
+                                            </Text>
+                                        </View>
                                     </View>
+
+                                    <View style={styles.ticketDetailDivider} />
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Parking Location</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.parkingSite}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.parkingSite || 'Valet Hub'}
+                                        </Text>
                                     </View>
+
+                                    <View style={styles.ticketDetailDivider} />
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Check-In Time</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.entryTime}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.entryTime}
+                                        </Text>
                                     </View>
                                 </View>
 
                                 {/* Action Buttons */}
-                                <View style={styles.actionButtonsRow}>
-                                    <TouchableOpacity
-                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }, isReturning && { opacity: 0.8 }]}
-                                        onPress={handleConfirmReturn}
-                                        disabled={isReturning}
-                                        activeOpacity={0.85}
-                                    >
-                                        {isReturning ? (
-                                            <ActivityIndicator color="#fff" />
-                                        ) : (
-                                            <>
-                                                <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 6 }} />
-                                                <Text style={styles.returnVehicleBtnText}>COMPLETE HANDOVER & RETURN VEHICLE</Text>
-                                            </>
-                                        )}
-                                    </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.primaryActionBtn, { backgroundColor: themeColor }, isReturning && { opacity: 0.8 }]}
+                                    onPress={handleConfirmReturn}
+                                    disabled={isReturning}
+                                    activeOpacity={0.88}
+                                >
+                                    {isReturning ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <>
+                                            <Ionicons name="key" size={18} color="#fff" style={{ marginRight: 8 }} />
+                                            <Text style={styles.primaryActionBtnText}>COMPLETE HANDOVER & RETURN VEHICLE</Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
 
-                                    <TouchableOpacity
-                                        style={[styles.cancelRequestBtn, isDarkMode && { backgroundColor: 'rgba(255, 59, 48, 0.12)', borderColor: '#FF453A' }]}
-                                        onPress={resetWorkflow}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Ionicons name="close-circle-outline" size={18} color="#FF3B30" style={{ marginRight: 4 }} />
-                                        <Text style={styles.cancelRequestBtnText}>CANCEL</Text>
-                                    </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.cancelOutlineBtn, isDarkMode && { borderColor: '#3A3A3C', backgroundColor: 'transparent' }]}
+                                    onPress={resetWorkflow}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="close-circle-outline" size={18} color="#8E8E93" style={{ marginRight: 6 }} />
+                                    <Text style={[styles.cancelOutlineBtnText, isDarkMode && { color: '#8E8E93' }]}>CANCEL</Text>
+                                </TouchableOpacity>
+                                <View style={styles.vehicleImageBannerCard}>
+                                    {foundTicket.photo ? (
+                                        <Image
+                                            source={{ uri: foundTicket.photo }}
+                                            style={styles.vehicleBannerImage}
+                                            resizeMode="cover"
+                                        />
+                                    ) : (
+                                        <View style={styles.vehicleBannerPlaceholder}>
+                                            <Ionicons name="car-sport" size={64} color="rgba(255, 255, 255, 0.25)" />
+                                            <Text style={styles.vehicleBannerPlaceholderText}>
+                                                {foundTicket.vehicleType || 'Vehicle'}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <View style={[styles.vehicleBannerBadge, { backgroundColor: themeColor }]}>
+                                        <Ionicons name="car-sport" size={14} color="#fff" style={{ marginRight: 6 }} />
+                                        <Text style={styles.vehicleBannerBadgeText}>
+                                            {(foundTicket.vehicleNumber || 'VEHICLE').toUpperCase()}
+                                        </Text>
+                                    </View>
                                 </View>
                             </ScrollView>
                         </View>
@@ -872,69 +923,100 @@ export default function KeyReturnScreen() {
                             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.ticketScrollContainer}>
                                 {/* Animated Concentric Checkmark Ring */}
                                 <View style={styles.concentricCheckmarkContainer}>
-                                    <View style={[styles.concentricOuterRing, { backgroundColor: 'rgba(52, 199, 89, 0.15)' }]}>
+                                    <View style={[styles.concentricOuterRing, { backgroundColor: 'rgba(52, 199, 89, 0.12)' }]}>
                                         <View style={[styles.concentricInnerRing, { backgroundColor: '#34C759' }]}>
-                                            <Ionicons name="checkmark" size={48} color="#fff" />
+                                            <Ionicons name="checkmark-sharp" size={24} color="#fff" />
                                         </View>
                                     </View>
                                     <Text style={[styles.returnedStatusTitle, isDarkMode && { color: '#fff' }]}>
-                                        Status: RETURNED
+                                        Vehicle Returned
                                     </Text>
-                                    <Text style={styles.returnedStatusSubtitle}>
-                                        Vehicle handover complete. Valet session is closed.
-                                    </Text>
+
                                 </View>
 
-                                {/* Closing Summary Details */}
+                                {/* Closing Summary Receipt Card */}
                                 <View style={[styles.ticketCard, isDarkMode && { backgroundColor: '#1C1C1E', borderColor: '#2C2C2E' }]}>
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Ticket ID</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.ticketId}</Text>
+                                        <Text style={[styles.ticketDetailValue, { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace', letterSpacing: 0.5 }, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.ticketId}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Vehicle Number</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.vehicleNumber}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {(foundTicket.vehicleNumber || '').toUpperCase()}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Customer Name</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.ownerName}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.ownerName
+                                                ? foundTicket.ownerName
+                                                    .toString()
+                                                    .split(/\s+/)
+                                                    .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                                                    .join(' ')
+                                                : 'Customer'}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Check-In Time</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{foundTicket.entryTime}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {foundTicket.entryTime}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
+
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Check-Out Time</Text>
-                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>{exitTime}</Text>
+                                        <Text style={[styles.ticketDetailValue, isDarkMode && { color: '#fff' }]}>
+                                            {exitTime}
+                                        </Text>
                                     </View>
+                                    <View style={styles.ticketDetailDivider} />
 
                                     <View style={styles.ticketDetailRow}>
                                         <Text style={styles.ticketDetailLabel}>Parking Status</Text>
-                                        <Text style={[styles.ticketDetailValue, { color: '#34C759' }]}>Return Confirmed</Text>
+                                        <View style={styles.statusPillBadge}>
+                                            <View style={styles.statusPillDot} />
+                                            <Text style={styles.statusPillText}>Return Confirmed</Text>
+                                        </View>
                                     </View>
                                 </View>
-                                <TouchableOpacity style={styles.whatsappButton} onPress={sendWhatsAppReceipt} activeOpacity={0.85}>
-                                    <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text style={styles.whatsappButtonText}>SEND RECEIPT ON WHATSAPP</Text>
-                                </TouchableOpacity>
-                                {/* Action Buttons Row */}
+
+                                {/* Action Buttons Row: WhatsApp, PDF, Done in ONE line */}
                                 <View style={styles.actionButtonsRow}>
                                     <TouchableOpacity
-                                        style={[styles.cancelRequestBtn, { borderColor: themeColor, backgroundColor: themeColorLight }]}
-                                        onPress={handleSavePdfReceipt}
-                                        activeOpacity={0.8}
+                                        style={styles.whatsappIconOnlyBtn}
+                                        onPress={sendWhatsAppReceipt}
+                                        activeOpacity={0.85}
                                     >
-                                        <Ionicons name="download-outline" size={18} color={themeColor} style={{ marginRight: 6 }} />
-                                        <Text style={[styles.cancelRequestBtnText, { color: themeColor }]}>PDF RECEIPT</Text>
+                                        <Ionicons name="logo-whatsapp" size={24} color="#FFFFFF" />
                                     </TouchableOpacity>
 
                                     <TouchableOpacity
-                                        style={[styles.returnVehicleBtn, { backgroundColor: themeColor }]}
-                                        onPress={resetWorkflow}
-                                        activeOpacity={0.8}
+                                        style={[styles.pdfReceiptBtn, { borderColor: themeColor, backgroundColor: themeColorLight }]}
+                                        onPress={handleSavePdfReceipt}
+                                        activeOpacity={0.85}
                                     >
-                                        <Ionicons name="checkmark-done" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
-                                        <Text style={styles.returnVehicleBtnText}>DONE</Text>
+                                        <Ionicons name="download-outline" size={17} color={themeColor} style={{ marginRight: 5 }} />
+                                        <Text style={[styles.pdfReceiptBtnText, { color: themeColor }]}>PDF RECEIPT</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[styles.doneActionBtn, { backgroundColor: themeColor }]}
+                                        onPress={resetWorkflow}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Ionicons name="checkmark-done" size={19} color="#FFFFFF" style={{ marginRight: 5 }} />
+                                        <Text style={styles.doneActionBtnText}>DONE</Text>
                                     </TouchableOpacity>
                                 </View>
 
@@ -950,7 +1032,9 @@ export default function KeyReturnScreen() {
                 {/* Bottom Navigation Tab Bar */}
                 <BottomTabBar />
             </View>
-
+            {/* <Text style={styles.scanHelperText}>
+                Gallery
+            </Text> */}
             {/* Full Screen Camera Modal for Departure Photo Capture */}
             {activeReturnPhotoSlot !== null && (
                 <View style={[StyleSheet.absoluteFillObject, { zIndex: 2000, backgroundColor: '#000' }]}>
@@ -1359,27 +1443,94 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         letterSpacing: 0.5,
     },
+    vehicleBannerPlaceholder: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#101B2B',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    vehicleBannerPlaceholderText: {
+        color: 'rgba(255, 255, 255, 0.4)',
+        fontSize: 13,
+        fontWeight: '700',
+        marginTop: 6,
+        letterSpacing: 0.5,
+    },
     acceptVerifyBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 12,
         marginBottom: 12,
     },
     acceptVerifyBadgeText: {
         fontSize: 12,
         fontWeight: '700',
         flex: 1,
+        lineHeight: 16,
+    },
+    keySlotBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 3,
+        paddingHorizontal: 8,
+        borderRadius: 6,
+        borderWidth: 1,
+    },
+    keySlotBadgeText: {
+        fontSize: 11.5,
+        fontWeight: '700',
+        letterSpacing: 0.2,
+    },
+    primaryActionBtn: {
+        width: '100%',
+        height: 52,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+        elevation: 3,
+        marginBottom: 10,
+    },
+    primaryActionBtnText: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    cancelOutlineBtn: {
+        width: '100%',
+        height: 46,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F2F2F7',
+        borderWidth: 1,
+        borderColor: '#E5E5EA',
+        marginBottom: 16,
+    },
+    cancelOutlineBtnText: {
+        color: '#8E8E93',
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     ticketCard: {
         backgroundColor: '#fff',
-        borderRadius: 16,
+        borderRadius: 14,
         borderWidth: 1.5,
         borderColor: '#E5E5EA',
-        padding: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
         alignItems: 'center',
-        marginBottom: 14,
+        marginBottom: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
@@ -1391,16 +1542,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 10,
+        paddingVertical: 2,
     },
     ticketDetailLabel: {
-        fontSize: 13,
+        fontSize: 12,
         color: '#8E8E93',
         fontWeight: '600',
     },
     ticketDetailValue: {
-        fontSize: 14,
-        fontWeight: '800',
+        fontSize: 12.5,
+        fontWeight: '700',
         color: '#1C1C1E',
     },
     actionButtonsRow: {
@@ -1549,8 +1700,8 @@ const styles = StyleSheet.create({
         marginVertical: 24,
     },
     concentricOuterRing: {
-        width: 120,
-        height: 120,
+        width: 70,
+        height: 70,
         borderRadius: 60,
         alignItems: 'center',
         justifyContent: 'center',
@@ -1579,24 +1730,77 @@ const styles = StyleSheet.create({
         color: '#8E8E93',
         textAlign: 'center',
     },
-    whatsappButton: {
-        backgroundColor: '#25D366',
+    ticketDetailDivider: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#EBEBF0',
+        width: '100%',
+        marginVertical: 6,
+    },
+    statusPillBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(52, 199, 89, 0.12)',
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+    },
+    statusPillDot: {
+        width: 7,
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: '#34C759',
+        marginRight: 6,
+    },
+    statusPillText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: '#28A745',
+        letterSpacing: 0.2,
+    },
+    whatsappIconOnlyBtn: {
+        width: 50,
         height: 50,
         borderRadius: 14,
+        backgroundColor: '#25D366',
         alignItems: 'center',
         justifyContent: 'center',
-        flexDirection: 'row',
-        marginBottom: 10,
         shadowColor: '#25D366',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowRadius: 6,
+        elevation: 3,
     },
-    whatsappButtonText: {
-        color: '#fff',
+    pdfReceiptBtn: {
+        flex: 1,
+        height: 50,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1.5,
+    },
+    pdfReceiptBtnText: {
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+    },
+    doneActionBtn: {
+        flex: 1,
+        height: 50,
+        borderRadius: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.18,
+        shadowRadius: 6,
+        elevation: 3,
+    },
+    doneActionBtnText: {
+        color: '#FFFFFF',
         fontSize: 13,
-        fontWeight: '700',
+        fontWeight: '800',
         letterSpacing: 0.5,
     },
     doneResetButtonStyled: {
